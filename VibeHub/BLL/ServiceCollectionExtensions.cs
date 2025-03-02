@@ -1,0 +1,21 @@
+using BLL.Abstractions.Interfaces;
+using BLL.Services;
+using BLL.Utilities;
+using BLL.Validators;
+using Core.Models;
+using FluentValidation;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace BLL;
+
+public static class ServiceCollectionExtensions
+{
+    public static void AddBusinessLogicLayer(this IServiceCollection services)
+    {
+        services.AddTransient<IMusicService, MusicService>();
+
+        services.AddScoped<IFilterUtility, FilterUtility>();
+        
+        services.AddScoped<IValidator<Music>, MusicValidator>();
+    }
+}
