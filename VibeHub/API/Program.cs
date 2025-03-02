@@ -1,6 +1,7 @@
 using BLL;
 using DAL;
 using DAL.Context;
+
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -23,7 +24,7 @@ namespace API
             builder.Services.AddOpenApi();
             builder.Services.AddBusinessLogicLayer();
             builder.Services.AddDataAccessLayer();
-            
+       
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {

@@ -14,8 +14,8 @@ public class AppDbContext : DbContext
         Database.OpenConnection();
     }
     
-    // protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    // {
-    //     optionsBuilder.UseNpgsql("Host=localhost:5432;Database=VibeHub;Username=postgres;Password=root");
-    // }
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseNpgsql("Host=localhost:5432;Database=VibeHub;Username=postgres;Password=root");
+    }
 }
