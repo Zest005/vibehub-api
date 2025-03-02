@@ -4,7 +4,7 @@ using DAL.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace DAL.Repository;
+namespace DAL.Repositories;
 
 public class MusicRepository : IMusicRepository
 {
