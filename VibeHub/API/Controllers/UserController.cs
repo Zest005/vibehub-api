@@ -44,6 +44,11 @@ namespace API.Controllers
         [HttpPost]
         public async Task<ActionResult<User>> Post([FromBody] User user)
         {
+            if (await _userRepository.ExistsAsync(user.Id))
+            {
+                return Conflict("A user with the same ID already exists.");
+            }
+
             await _userRepository.AddAsync(user);
 
             return CreatedAtAction("Get", new { id = user.Id }, user);
@@ -53,14 +58,25 @@ namespace API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(Guid id, [FromBody] User user)
         {
-            if (id != user.Id)
+            var existingUser = await _userRepository.GetByIdAsync(id);
+            if (existingUser == null)
             {
-                return BadRequest();
+                return NotFound();
             }
+            else if (user.Id != id && user.Id != Guid.Empty)
+            {
+                return BadRequest("User ID cannot be changed.");
+            }
+
+            existingUser.Name = user.Name;
+            existingUser.Email = user.Email;
+            existingUser.Nickname = user.Nickname;
+            existingUser.Password = user.Password;
+            existingUser.Room = user.Room;
 
             try
             {
-                await _userRepository.UpdateAsync(user);
+                await _userRepository.UpdateAsync(existingUser);
             }
             catch (DbUpdateConcurrencyException)
             {
