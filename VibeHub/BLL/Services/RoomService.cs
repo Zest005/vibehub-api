@@ -35,17 +35,6 @@ public class RoomService : IRoomService
             throw new InvalidOperationException("Owner with such ID does not exist.");
         }
 
-        if (room.MusicIds != null)
-        {
-            foreach (var musicId in room.MusicIds)
-            {
-                if (!await _musicRepository.Exists(musicId))
-                {
-                    throw new InvalidOperationException("One or more music IDs do not exist.");
-                }
-            }
-        }
-
         room.Code = GenerateRoomCode();
 
         await _roomRepository.Add(room);
