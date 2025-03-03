@@ -1,4 +1,5 @@
-﻿using Core.Models;
+﻿using BLL.Abstractions.Interfaces;
+using Core.Models;
 using DAL.Abstractions.Interfaces;
 using DAL.Context;
 using Microsoft.AspNetCore.Mvc;
@@ -10,19 +11,18 @@ namespace API.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly IUserRepository _userRepository;
+        private readonly IUserService _userService;
 
-        public UserController(IUserRepository userRepository)
+        public UserController(IUserService userService)
         {
-            _userRepository = userRepository;
+            _userService = userService;
         }
 
         // GET api/User
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> Get()
         {
-            var users = await _userRepository.GetList();
-
+            var users = await _userService.GetList();
             return Ok(users);
         }
 
@@ -30,83 +30,64 @@ namespace API.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> Get(Guid id)
         {
-            var user = await _userRepository.GetById(id);
-
-            if (user == null)
+            try
+            {
+                var user = await _userService.GetById(id);
+                return Ok(user);
+            }
+            catch (KeyNotFoundException)
             {
                 return NotFound();
             }
-
-            return Ok(user);
         }
 
         // POST api/User
         [HttpPost]
         public async Task<ActionResult<User>> Post([FromBody] User user)
         {
-            if (await _userRepository.Exists(user.Id))
+            try
             {
-                return Conflict("A user with the same ID already exists.");
+                await _userService.Add(user);
+                return CreatedAtAction("Get", new { id = user.Id }, user);
             }
-
-            await _userRepository.Add(user);
-
-            return CreatedAtAction("Get", new { id = user.Id }, user);
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         // PUT api/User/5
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(Guid id, [FromBody] User user)
         {
-            var existingUser = await _userRepository.GetById(id);
-            if (existingUser == null)
+            try
+            {
+                await _userService.Update(id, user);
+                return NoContent();
+            }
+            catch (KeyNotFoundException)
             {
                 return NotFound();
             }
-            else if (user.Id != id && user.Id != Guid.Empty)
+            catch (InvalidOperationException ex)
             {
-                return BadRequest("User ID cannot be changed.");
+                return BadRequest(ex.Message);
             }
-
-            existingUser.Name = user.Name;
-            existingUser.Email = user.Email;
-            existingUser.Nickname = user.Nickname;
-            existingUser.Password = user.Password;
-            existingUser.Room = user.Room;
-
-            try
-            {
-                await _userRepository.Update(existingUser);
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!await _userRepository.Exists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
         }
 
         // DELETE api/User/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var user = await _userRepository.GetById(id);
-
-            if (user == null)
+            try
+            {
+                await _userService.Delete(id);
+                return NoContent();
+            }
+            catch (KeyNotFoundException)
             {
                 return NotFound();
             }
-
-            await _userRepository.Delete(id);
-
-            return NoContent();
         }
     }
 }
