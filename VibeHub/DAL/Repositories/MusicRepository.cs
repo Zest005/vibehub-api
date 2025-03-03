@@ -41,6 +41,7 @@ public class MusicRepository : IMusicRepository
     {
         _context.Entry(music).State = EntityState.Modified;
         await _context.SaveChangesAsync();
+        
         return music;
     }
 
@@ -49,5 +50,10 @@ public class MusicRepository : IMusicRepository
         _dbSet.Remove(music);
         await _context.SaveChangesAsync();
         return true;
+    }
+    
+    public async Task<bool> Exists(Guid id)
+    {
+        return await _dbSet.AnyAsync(music => music.Id == id);
     }
 }

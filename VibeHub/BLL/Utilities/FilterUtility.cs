@@ -10,10 +10,11 @@ public class FilterUtility : IFilterUtility
 {
     private readonly ILogger<FilterUtility> _logger;
 
-    private readonly Regex ScriptTagRegex = new(
-        "<script.*?>.*?</script>",
+    private readonly Regex EscapeTagRegex = new(
+        @"<(?<tag>\w+)[^>]*>.*?</\k<tag>>",
         RegexOptions.IgnoreCase | RegexOptions.Singleline
     );
+
 
     public FilterUtility(ILogger<FilterUtility> logger)
     {
@@ -91,6 +92,6 @@ public class FilterUtility : IFilterUtility
         if (string.IsNullOrEmpty(input))
             return input;
 
-        return ScriptTagRegex.Replace(input, string.Empty);
+        return EscapeTagRegex.Replace(input, string.Empty);
     }
 }

@@ -9,4 +9,5 @@ public interface IMusicRepository
     Task<Music> Add(Music music);
     Task<Music> Update(Music music);
     Task<bool> Delete(Music music);
+    Task<bool> Exists(Guid id);
 }
