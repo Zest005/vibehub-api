@@ -1,54 +1,48 @@
 ﻿using BLL.Abstractions.Interfaces;
 using Core.Models;
-using DAL.Abstractions.Interfaces;
-using DAL.Context;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserController : ControllerBase
+    public class RoomController : ControllerBase
     {
-        private readonly IUserService _userService;
+        private readonly IRoomService _roomService;
 
-        public UserController(IUserService userService)
+        public RoomController(IRoomService roomService)
         {
-            _userService = userService;
+            _roomService = roomService;
         }
 
-        // GET api/User
+        // GET api/Room
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> Get()
+        public async Task<ActionResult<IEnumerable<Room>>> Get()
         {
-            var users = await _userService.GetList();
-            return Ok(users);
+            var rooms = await _roomService.GetList();
+            return Ok(rooms);
         }
 
-        // GET api/User/5
+        // GET api/Room/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> Get(Guid id)
+        public async Task<ActionResult<Room>> Get(Guid id)
         {
-            try
-            {
-                var user = await _userService.GetById(id);
-                return Ok(user);
-            }
-            catch (KeyNotFoundException)
+            var room = await _roomService.GetById(id);
+            if (room == null)
             {
                 return NotFound();
             }
+            return Ok(room);
         }
 
-        // POST api/User
+        // POST api/Room
         [HttpPost]
-        public async Task<ActionResult<User>> Post([FromBody] User user)
+        public async Task<ActionResult<Room>> Post([FromBody] Room room)
         {
             try
             {
-                await _userService.Add(user);
-                return CreatedAtAction("Get", new { id = user.Id }, user);
+                var createdRoom = await _roomService.Add(room);
+                return CreatedAtAction("Get", new { id = createdRoom.Id }, createdRoom);
             }
             catch (InvalidOperationException ex)
             {
@@ -56,13 +50,13 @@ namespace API.Controllers
             }
         }
 
-        // PUT api/User/5
+        // PUT api/Room/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(Guid id, [FromBody] User user)
+        public async Task<IActionResult> Put(Guid id, [FromBody] Room room)
         {
             try
             {
-                await _userService.Update(id, user);
+                await _roomService.Update(id, room);
                 return NoContent();
             }
             catch (KeyNotFoundException)
@@ -75,13 +69,13 @@ namespace API.Controllers
             }
         }
 
-        // DELETE api/User/5
+        // DELETE api/Room/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
             try
             {
-                await _userService.Delete(id);
+                await _roomService.Delete(id);
                 return NoContent();
             }
             catch (KeyNotFoundException)

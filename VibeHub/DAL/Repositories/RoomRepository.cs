@@ -8,51 +8,51 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repositories
 {
-    public class UserRepository : IUserRepository
+    public class RoomRepository : IRoomRepository
     {
         private readonly AppDbContext _context;
 
-        public UserRepository(AppDbContext context)
+        public RoomRepository(AppDbContext context)
         {
             _context = context;
         }
 
-        public async Task<IEnumerable<User>> GetList()
+        public async Task<IEnumerable<Room>> GetList()
         {
-            return await _context.Users.ToListAsync();
+            return await _context.Rooms.ToListAsync();
         }
 
-        public async Task<User> GetById(Guid id)
+        public async Task<Room> GetById(Guid id)
         {
-            return await _context.Users.FindAsync(id);
+            return await _context.Rooms.FindAsync(id);
         }
 
-        public async Task Add(User user)
+        public async Task Add(Room room)
         {
-            _context.Users.Add(user);
+            _context.Rooms.Add(room);
             await _context.SaveChangesAsync();
         }
 
-        public async Task Update(User user)
+        public async Task Update(Room room)
         {
-            _context.Entry(user).State = EntityState.Modified;
+            _context.Entry(room).State = EntityState.Modified;
             await _context.SaveChangesAsync();
         }
 
         public async Task Delete(Guid id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var room = await _context.Rooms.FindAsync(id);
 
-            if (user != null)
+            if (room != null)
             {
-                _context.Users.Remove(user);
+                _context.Rooms.Remove(room);
                 await _context.SaveChangesAsync();
             }
         }
 
         public async Task<bool> Exists(Guid id)
         {
-            return await _context.Users.AnyAsync(e => e.Id == id);
+            return await _context.Rooms.AnyAsync(e => e.Id == id);
         }
     }
 }
