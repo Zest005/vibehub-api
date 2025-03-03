@@ -25,7 +25,7 @@ namespace API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Room>>> Get()
         {
-            var rooms = await _roomRepository.GetAllAsync();
+            var rooms = await _roomRepository.GetList();
 
             return Ok(rooms);
         }
@@ -34,7 +34,7 @@ namespace API.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Room>> Get(Guid id)
         {
-            var room = await _roomRepository.GetByIdAsync(id);
+            var room = await _roomRepository.GetById(id);
 
             if (room == null)
             {
@@ -48,7 +48,7 @@ namespace API.Controllers
         [HttpPost]
         public async Task<ActionResult<Room>> Post([FromBody] Room room)
         {
-            if (await _roomRepository.ExistsAsync(room.Id))
+            if (await _roomRepository.Exists(room.Id))
             {
                 return Conflict("A room with the same ID already exists.");
             }
@@ -58,19 +58,19 @@ namespace API.Controllers
                 return BadRequest("Code cannot be provided in the request.");
             }
 
-            if (!await _userRepository.ExistsAsync(room.OwnerId))
+            if (!await _userRepository.Exists(room.OwnerId))
             {
                 return BadRequest("Owner with such ID does not exist.");
             }
 
-            if (!await _musicRepository.ExistsAsync(room.MusicIds))
+            if (!await _musicRepository.Exists(room.MusicIds))
             {
                 return BadRequest("One or more music IDs do not exist.");
             }
 
             room.Code = room.Code ?? GenerateRoomCode();
 
-            await _roomRepository.AddAsync(room);
+            await _roomRepository.Add(room);
 
             return CreatedAtAction("Get", new { id = room.Id }, room);
         }
@@ -87,7 +87,7 @@ namespace API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(Guid id, [FromBody] Room room)
         {
-            var existingRoom = await _roomRepository.GetByIdAsync(id);
+            var existingRoom = await _roomRepository.GetById(id);
             if (existingRoom == null)
             {
                 return NotFound();
@@ -102,7 +102,7 @@ namespace API.Controllers
                 return BadRequest("Code cannot be changed.");
             }
 
-            if (!await _userRepository.ExistsAsync(room.OwnerId))
+            if (!await _userRepository.Exists(room.OwnerId))
             {
                 return BadRequest("Owner with such ID does not exist.");
             }
@@ -119,11 +119,11 @@ namespace API.Controllers
 
             try
             {
-                await _roomRepository.UpdateAsync(existingRoom);
+                await _roomRepository.Update(existingRoom);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await _roomRepository.ExistsAsync(id))
+                if (!await _roomRepository.Exists(id))
                 {
                     return NotFound();
                 }
@@ -140,14 +140,14 @@ namespace API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var room = await _roomRepository.GetByIdAsync(id);
+            var room = await _roomRepository.GetById(id);
 
             if (room == null)
             {
                 return NotFound();
             }
 
-            await _roomRepository.DeleteAsync(id);
+            await _roomRepository.Delete(id);
 
             return NoContent();
         }

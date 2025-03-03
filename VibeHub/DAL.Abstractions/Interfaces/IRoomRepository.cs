@@ -7,11 +7,11 @@ namespace DAL.Abstractions.Interfaces
 {
     public interface IRoomRepository
     {
-        Task<IEnumerable<Room>> GetAllAsync();
-        Task<Room> GetByIdAsync(Guid id);
-        Task AddAsync(Room room);
-        Task UpdateAsync(Room room);
-        Task DeleteAsync(Guid id);
-        Task<bool> ExistsAsync(Guid id);
+        Task<IEnumerable<Room>> GetList();
+        Task<Room> GetById(Guid id);
+        Task Add(Room room);
+        Task Update(Room room);
+        Task Delete(Guid id);
+        Task<bool> Exists(Guid id);
     }
 }

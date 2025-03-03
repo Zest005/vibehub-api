@@ -21,7 +21,7 @@ namespace API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> Get()
         {
-            var users = await _userRepository.GetAllAsync();
+            var users = await _userRepository.GetList();
 
             return Ok(users);
         }
@@ -30,7 +30,7 @@ namespace API.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> Get(Guid id)
         {
-            var user = await _userRepository.GetByIdAsync(id);
+            var user = await _userRepository.GetById(id);
 
             if (user == null)
             {
@@ -44,12 +44,12 @@ namespace API.Controllers
         [HttpPost]
         public async Task<ActionResult<User>> Post([FromBody] User user)
         {
-            if (await _userRepository.ExistsAsync(user.Id))
+            if (await _userRepository.Exists(user.Id))
             {
                 return Conflict("A user with the same ID already exists.");
             }
 
-            await _userRepository.AddAsync(user);
+            await _userRepository.Add(user);
 
             return CreatedAtAction("Get", new { id = user.Id }, user);
         }
@@ -58,7 +58,7 @@ namespace API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(Guid id, [FromBody] User user)
         {
-            var existingUser = await _userRepository.GetByIdAsync(id);
+            var existingUser = await _userRepository.GetById(id);
             if (existingUser == null)
             {
                 return NotFound();
@@ -76,11 +76,11 @@ namespace API.Controllers
 
             try
             {
-                await _userRepository.UpdateAsync(existingUser);
+                await _userRepository.Update(existingUser);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await _userRepository.ExistsAsync(id))
+                if (!await _userRepository.Exists(id))
                 {
                     return NotFound();
                 }
@@ -97,14 +97,14 @@ namespace API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var user = await _userRepository.GetByIdAsync(id);
+            var user = await _userRepository.GetById(id);
 
             if (user == null)
             {
                 return NotFound();
             }
 
-            await _userRepository.DeleteAsync(id);
+            await _userRepository.Delete(id);
 
             return NoContent();
         }

@@ -7,11 +7,11 @@ namespace DAL.Abstractions.Interfaces
 {
     public interface IUserRepository
     {
-        Task<IEnumerable<User>> GetAllAsync();
-        Task<User> GetByIdAsync(Guid id);
-        Task AddAsync(User user);
-        Task UpdateAsync(User user);
-        Task DeleteAsync(Guid id);
-        Task<bool> ExistsAsync(Guid id);
+        Task<IEnumerable<User>> GetList();
+        Task<User> GetById(Guid id);
+        Task Add(User user);
+        Task Update(User user);
+        Task Delete(Guid id);
+        Task<bool> Exists(Guid id);
     }
 }

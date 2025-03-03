@@ -17,29 +17,29 @@ namespace DAL.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<User>> GetAllAsync()
+        public async Task<IEnumerable<User>> GetList()
         {
             return await _context.Users.ToListAsync();
         }
 
-        public async Task<User> GetByIdAsync(Guid id)
+        public async Task<User> GetById(Guid id)
         {
             return await _context.Users.FindAsync(id);
         }
 
-        public async Task AddAsync(User user)
+        public async Task Add(User user)
         {
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(User user)
+        public async Task Update(User user)
         {
             _context.Entry(user).State = EntityState.Modified;
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(Guid id)
+        public async Task Delete(Guid id)
         {
             var user = await _context.Users.FindAsync(id);
 
@@ -50,7 +50,7 @@ namespace DAL.Repositories
             }
         }
 
-        public async Task<bool> ExistsAsync(Guid id)
+        public async Task<bool> Exists(Guid id)
         {
             return await _context.Users.AnyAsync(e => e.Id == id);
         }
