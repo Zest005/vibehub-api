@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using BLL.Abstractions.Interfaces;
+using BLL.Abstractions.Utilities;
 using Microsoft.Extensions.Logging;
 
 namespace BLL.Utilities;

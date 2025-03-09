@@ -1,6 +1,6 @@
 using Core.Models;
 
-namespace BLL.Abstractions.Interfaces;
+namespace BLL.Abstractions.Services;
 
 public interface IMusicService
 {
