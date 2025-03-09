@@ -13,6 +13,8 @@ public static class ServiceCollectionExtensions
     public static void AddBusinessLogicLayer(this IServiceCollection services)
     {
         services.AddTransient<IMusicService, MusicService>();
+        services.AddTransient<IUserService, UserService>();
+        services.AddTransient<IRoomService, RoomService>();
 
         services.AddScoped<IFilterUtility, FilterUtility>();
         
