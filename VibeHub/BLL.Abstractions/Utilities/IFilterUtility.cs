@@ -1,4 +1,4 @@
-namespace BLL.Abstractions.Interfaces;
+namespace BLL.Abstractions.Utilities;
 
 public interface IFilterUtility
 {
