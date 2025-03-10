@@ -26,5 +26,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IValidator<User>, UserValidator>();
         services.AddScoped<IValidator<Room>, RoomValidator>();
         services.AddScoped<IValidator<MessageDto>, MessageValidator>();
+        services.AddScoped<IValidator<MusicDto>, MusicDtoValidator>();
     }
 }

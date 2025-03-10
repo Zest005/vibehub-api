@@ -11,5 +11,6 @@ public static class ServiceCollectionExtensions
         repositories.AddScoped<IMusicRepository, MusicRepository>();
         repositories.AddScoped<IUserRepository, UserRepository>();
         repositories.AddScoped<IRoomRepository, RoomRepository>();
+        repositories.AddScoped<IMessageHistoryRepository, MessageHistoryRepository>();
     }
 }
