@@ -3,6 +3,7 @@ using DAL;
 using DAL.Context;
 
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
@@ -16,11 +17,13 @@ namespace API
 
             var connectionString = builder.Configuration.GetConnectionString("VibeHubDatabase");
             
-            // Add services to the container.
             builder.Services.AddControllers();
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(connectionString));
-
+            builder.Services.Configure<FormOptions>(options =>
+            {
+                options.MultipartBodyLengthLimit = 10 * 1024 * 1024; 
+            });
             builder.Services.AddFluentValidationAutoValidation();
             builder.Services.AddOpenApi();
             builder.Services.AddBusinessLogicLayer();
@@ -33,14 +36,13 @@ namespace API
             });
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
                 {
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "VibeHub API v1");
-                    c.RoutePrefix = string.Empty; // Serve the Swagger UI at the app's root
+                    c.RoutePrefix = string.Empty; 
                 });
                 
                 app.MapOpenApi();

@@ -1,4 +1,5 @@
 using BLL.Abstractions.Services;
+using Core.DTO;
 using Core.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,15 +28,24 @@ public class MusicController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<IActionResult> GetById(Guid id, [FromQuery] bool download)
     {
-        var result = await _musicService.GetById(id);
-        
-        return result != null ? Ok(result) : NotFound(result);
+        if (download)
+        {
+            var result = await _musicService.GetFileById(id);
+            
+            return result;
+        }
+        else
+        {
+            var result = await _musicService.GetById(id);
+            
+            return result != null ? Ok(result) : NotFound(result);
+        }
     }
     
     [HttpPost]
-    public async Task<IActionResult> Add(Music music)
+    public async Task<IActionResult> Add([FromForm] MusicDto music)
     {
         var result = await _musicService.Add(music);
         
