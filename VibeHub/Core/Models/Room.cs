@@ -9,6 +9,6 @@ public class Room : BaseEntity
     public short UserCount { get; set; }
     public bool Availability { get; set; } = false;
     public Guid OwnerId { get; set; }
-    
-    public List<Guid>? MusicIds { get; set; }
+
+    public List<Music>? Playlist { get; set; }
 }
