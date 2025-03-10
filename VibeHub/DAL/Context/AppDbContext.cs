@@ -10,10 +10,10 @@ public class AppDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<MessageHistory> MessageHistories { get; set; }
     
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-    {
-        Database.OpenConnection();
-    }
+    //public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    //{
+    //    Database.OpenConnection();
+    //}
     
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
