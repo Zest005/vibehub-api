@@ -33,7 +33,6 @@ namespace API
             builder.Services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "VibeHub API", Version = "v1" });
-                // c.OperationFilter<FileUploadOperationFilter>();
             });
             var app = builder.Build();
 
