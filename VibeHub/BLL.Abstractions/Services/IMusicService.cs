@@ -11,6 +11,5 @@ public interface IMusicService
     Task<FileStreamResult> GetFileById(Guid id);
     Task<IEnumerable<Music>> GetList();
     Task<Music> Add(MusicDto file);
-    Task<Music> Update(Guid id, Music music);
     Task<bool> Delete(Guid id);
 }

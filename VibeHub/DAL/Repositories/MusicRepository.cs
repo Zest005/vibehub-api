@@ -37,14 +37,6 @@ public class MusicRepository : IMusicRepository
         return music;
     }
 
-    public async Task<Music> Update(Music music)
-    {
-        _context.Entry(music).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
-        
-        return music;
-    }
-
     public async Task<bool> Delete(Music music)
     {
         _dbSet.Remove(music);
