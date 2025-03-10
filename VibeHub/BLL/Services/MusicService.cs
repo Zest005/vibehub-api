@@ -48,22 +48,22 @@ public class MusicService : IMusicService
             throw new InvalidOperationException($"Music with id {id} not found");
         }
 
-        var filePath = Path.Combine(_uploadPath, targetMusic.Filename);
+        var filePath = Directory.GetFiles(_uploadPath, targetMusic.Id.ToString() + ".*");
 
-        if (!File.Exists(filePath))
+        if (!File.Exists(filePath[0]))
         {
-            _logger.LogError($"File {targetMusic.Filename} not found at {filePath}");
-            throw new InvalidOperationException($"File {targetMusic.Filename} not found.");
+            _logger.LogError($"File {targetMusic.Id.ToString() + ".*"} not found at {filePath}");
+            throw new InvalidOperationException($"File {targetMusic.Id.ToString() + ".*"} not found.");
         }
 
-        var fileExtension = Path.GetExtension(targetMusic.Filename).ToLower();
+        var fileExtension = Path.GetExtension(filePath[0]).ToLower();
         var mimeType = _allowedMimeTypes.GetValueOrDefault(fileExtension, "application/octet-stream");  
 
-        var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+        var fileStream = new FileStream(filePath[0], FileMode.Open, FileAccess.Read, FileShare.Read);
 
         return new FileStreamResult(fileStream, mimeType)
         {
-            FileDownloadName = targetMusic.Filename 
+            FileDownloadName = targetMusic.Id.ToString() + fileExtension 
         };
     }
 
@@ -131,8 +131,7 @@ public class MusicService : IMusicService
             {
                 Id = guid,
                 Title = songTitle,
-                Artist = artistName,
-                Filename = secretFileName
+                Artist = artistName
             };
 
             music = await _filterUtility.Filter(music);
@@ -148,33 +147,6 @@ public class MusicService : IMusicService
         }
     }
 
-    public async Task<Music> Update(Guid id, Music music)
-    {
-        try
-        {
-            _logger.LogInformation($"Updating music with id {id}");
-            var targetMusic = await _repository.GetById(id);
-            if (targetMusic == null)
-            {
-                _logger.LogError($"Music with id {id} not found");
-                throw new InvalidOperationException($"Music with id {id} not found");
-            }
-
-            music = await _filterUtility.Filter(music);
-
-            targetMusic.Title = music.Title;
-            targetMusic.Artist = music.Artist;
-            targetMusic.Filename = music.Filename;
-
-            return await _repository.Update(targetMusic);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error updating music with id {id}: {ex.Message}");
-            throw;
-        }
-    }
-
     public async Task<bool> Delete(Guid id)
     {
         _logger.LogInformation($"Deleting music with id {id}");
@@ -187,10 +159,10 @@ public class MusicService : IMusicService
                 return false;
             }
             
-            var filePath = Path.Combine(_uploadPath, music.Filename);
+            var filePath = Directory.GetFiles(_uploadPath, music.Id.ToString() + ".*");
             
-            if (File.Exists(filePath))
-                File.Delete(filePath);
+            if (File.Exists(filePath[0]))
+                File.Delete(filePath[0]);
             
             return await _repository.Delete(music);
         }

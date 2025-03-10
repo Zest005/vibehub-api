@@ -52,14 +52,6 @@ public class MusicController : ControllerBase
         return result != null ? CreatedAtAction(nameof(Add), result) : BadRequest();
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, Music music)
-    {
-        var result = await _musicService.Update(id, music);
-        
-        return result != null ? Ok(result) : BadRequest(result);
-    }
-
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
