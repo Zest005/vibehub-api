@@ -186,7 +186,12 @@ public class MusicService : IMusicService
                 _logger.LogError($"Music with id {id} not found");
                 return false;
             }
-
+            
+            var filePath = Path.Combine(_uploadPath, music.Filename);
+            
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+            
             return await _repository.Delete(music);
         }
         catch (Exception ex)
