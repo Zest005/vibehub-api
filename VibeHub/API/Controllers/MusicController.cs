@@ -1,6 +1,6 @@
 using BLL.Abstractions.Services;
 using Core.DTO;
-using Core.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
@@ -18,7 +18,8 @@ public class MusicController : ControllerBase
         _musicService = musicService;
         _logger = logger;
     }
-    
+
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetList()
     {
@@ -27,6 +28,7 @@ public class MusicController : ControllerBase
         return result != null ? Ok(result) : NotFound(result);
     }
 
+    [Authorize]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id, [FromQuery] bool download)
     {
@@ -43,7 +45,8 @@ public class MusicController : ControllerBase
             return result != null ? Ok(result) : NotFound(result);
         }
     }
-    
+
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Add([FromForm] MusicDto music)
     {
@@ -52,6 +55,7 @@ public class MusicController : ControllerBase
         return result != null ? CreatedAtAction(nameof(Add), result) : BadRequest();
     }
 
+    [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {

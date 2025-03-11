@@ -13,5 +13,6 @@ namespace DAL.Abstractions.Interfaces
         Task Update(User user);
         Task Delete(Guid id);
         Task<bool> Exists(Guid id);
+        Task<User> GetByEmail(string email);
     }
 }

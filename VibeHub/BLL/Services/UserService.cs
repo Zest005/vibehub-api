@@ -72,4 +72,19 @@ public class UserService : IUserService
 
         await _userRepository.Update(existingUser);
     }
+
+    public async Task<User> Authenticate(string email, string password)
+    {
+        var user = await _userRepository.GetByEmail(email);
+        if (user == null || user.Password != password)
+            return null;
+
+        return user;
+    }
+
+    public async Task Logout(User user)
+    {
+        user.Token = null;
+        await _userRepository.Update(user);
+    }
 }

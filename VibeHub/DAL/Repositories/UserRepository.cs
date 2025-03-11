@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Core.Models;
+﻿using Core.Models;
 using DAL.Abstractions.Interfaces;
 using DAL.Context;
 using Microsoft.EntityFrameworkCore;
@@ -53,6 +50,11 @@ namespace DAL.Repositories
         public async Task<bool> Exists(Guid id)
         {
             return await _context.Users.AnyAsync(e => e.Id == id);
+        }
+
+        public async Task<User> GetByEmail(string email)
+        {
+            return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         }
     }
 }
