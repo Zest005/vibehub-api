@@ -1,4 +1,4 @@
-﻿using Core.Models;
+using Core.Models;
 
 namespace DAL.Abstractions.Interfaces;
 

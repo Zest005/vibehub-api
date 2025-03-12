@@ -1,4 +1,5 @@
 using BLL.Abstractions.Services;
+using Core.DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,7 +16,6 @@ public class MusicController : ControllerBase
     {
         _musicService = musicService;
         _logger = logger;
-    }
 
     [Authorize]
     [HttpGet("{id}")]
@@ -34,4 +34,5 @@ public class MusicController : ControllerBase
             return result != null ? Ok(result) : NotFound(result);
         }
     }
+
 }
