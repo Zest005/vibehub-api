@@ -1,4 +1,4 @@
-using BLL.Abstractions.Interfaces.Services;
+using BLL.Abstractions.Services;
 using Core.DTO;
 using Microsoft.AspNetCore.Mvc;
 

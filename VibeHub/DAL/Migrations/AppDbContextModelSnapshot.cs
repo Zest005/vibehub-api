@@ -125,6 +125,9 @@ namespace DAL.Migrations
                     b.Property<Guid?>("RoomId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Token")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("RoomId");
@@ -154,7 +157,7 @@ namespace DAL.Migrations
             modelBuilder.Entity("Core.Models.Music", b =>
                 {
                     b.HasOne("Core.Models.Room", null)
-                        .WithMany("Music")
+                        .WithMany("Playlist")
                         .HasForeignKey("RoomId");
                 });
 
@@ -169,7 +172,7 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("Core.Models.Room", b =>
                 {
-                    b.Navigation("Music");
+                    b.Navigation("Playlist");
                 });
 #pragma warning restore 612, 618
         }

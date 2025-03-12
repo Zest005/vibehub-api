@@ -87,9 +87,10 @@ public class RoomService : IRoomService
             throw new InvalidOperationException("Owner with such ID does not exist.");
         }
 
-        if (room.MusicIds != null)
+        /*
+        if (room.Playlist != null)
         {
-            foreach (var musicId in room.MusicIds)
+            foreach (var musicId in room.Playlist)
             {
                 if (!await _musicRepository.Exists(musicId))
                 {
@@ -97,11 +98,12 @@ public class RoomService : IRoomService
                 }
             }
         }
+        */
 
         existingRoom.UserCount = room.UserCount;
         existingRoom.Availability = room.Availability;
         existingRoom.OwnerId = room.OwnerId;
-        existingRoom.MusicIds = room.MusicIds;
+        existingRoom.Playlist = room.Playlist;
 
         await _roomRepository.Update(existingRoom);
     }
