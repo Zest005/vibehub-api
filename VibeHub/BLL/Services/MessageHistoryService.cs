@@ -1,4 +1,3 @@
-using BLL.Abstractions.Interfaces.Services;
 using BLL.Abstractions.Services;
 using BLL.Abstractions.Utilities;
 using Core.DTO;
@@ -9,13 +8,14 @@ namespace BLL.Services;
 
 public class MessageHistoryService : IMessageHistoryService
 {
-    private readonly IUserService _userService;
-    private readonly IRoomService _roomService;
-    private readonly IMessageHistoryRepository _messageHistoryRepository;
     private readonly IFilterUtility _filterUtility;
-    
-    
-    public MessageHistoryService(IUserService userService, IRoomService roomService, IMessageHistoryRepository messageHistoryRepository, IFilterUtility filterUtility)
+    private readonly IMessageHistoryRepository _messageHistoryRepository;
+    private readonly IRoomService _roomService;
+    private readonly IUserService _userService;
+
+
+    public MessageHistoryService(IUserService userService, IRoomService roomService,
+        IMessageHistoryRepository messageHistoryRepository, IFilterUtility filterUtility)
     {
         _userService = userService;
         _roomService = roomService;
@@ -27,17 +27,11 @@ public class MessageHistoryService : IMessageHistoryService
     {
         var user = await _userService.GetById(message.UserId);
         var room = await _roomService.GetById(message.RoomId);
-        
-        if (user == null || room == null)
-        {
-            throw new ArgumentNullException("The user and room can't be null");
-        }
+
+        if (user == null || room == null) throw new ArgumentNullException("The user and room can't be null");
 
         message = await _filterUtility.Filter(message);
-        if (string.IsNullOrWhiteSpace(message.Text))
-        {
-            return false;
-        }
+        if (string.IsNullOrWhiteSpace(message.Text)) return false;
 
         MessageHistory messageHistory = new()
         {
@@ -45,7 +39,7 @@ public class MessageHistoryService : IMessageHistoryService
             RoomId = message.RoomId,
             Message = message.Text
         };
-        
+
         var isAdded = await _messageHistoryRepository.Add(messageHistory);
 
         return isAdded;
@@ -54,11 +48,8 @@ public class MessageHistoryService : IMessageHistoryService
     public async Task<List<MessageHistory>> GetList(Guid roomId)
     {
         var room = await _roomService.GetById(roomId);
-        if (room == null)
-        {
-            throw new ArgumentNullException("The room can't be null");
-        }
-        
+        if (room == null) throw new ArgumentNullException("The room can't be null");
+
         var messages = await _messageHistoryRepository.GetList(roomId);
 
         return messages;

@@ -1,6 +1,7 @@
-using BLL.Abstractions.Interfaces.Services;
+using BLL.Abstractions.Helpers;
 using BLL.Abstractions.Services;
 using BLL.Abstractions.Utilities;
+using BLL.Helpers;
 using BLL.Services;
 using BLL.Utilities;
 using BLL.Validators;
@@ -15,16 +16,18 @@ public static class ServiceCollectionExtensions
 {
     public static void AddBusinessLogicLayer(this IServiceCollection services)
     {
-        services.AddTransient<IMusicService, MusicService>();
-        services.AddTransient<IUserService, UserService>();
-        services.AddTransient<IRoomService, RoomService>();
-        services.AddTransient<IMessageHistoryService, MessageHistoryService>();
-        
-        services.AddScoped<IFilterUtility, FilterUtility>();
-        
+        services.AddScoped<IMusicService, MusicService>();
+        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IRoomService, RoomService>();
+        services.AddScoped<IMessageHistoryService, MessageHistoryService>();
+        services.AddScoped<ITokenService, TokenService>();
+        services.AddScoped<IAuthService, AuthService>();
+
+        services.AddSingleton<IFilterUtility, FilterUtility>();
+        services.AddSingleton<IMusicFileHelper, MusicFileHelper>();
+
         services.AddScoped<IValidator<User>, UserValidator>();
         services.AddScoped<IValidator<Room>, RoomValidator>();
         services.AddScoped<IValidator<MessageDto>, MessageValidator>();
-        services.AddScoped<IValidator<MusicDto>, MusicDtoValidator>();
     }
 }

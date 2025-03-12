@@ -399,3 +399,4 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 /VibeHub/API/Uploads
+/VibeHub/API/appsettings.json
