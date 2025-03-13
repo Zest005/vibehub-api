@@ -56,30 +56,13 @@ public class RoomController : ControllerBase
     }
 
     [Authorize]
-    [HttpPost("{id}/join")]
-    public async Task<ActionResult> JoinRoom(Guid id, [FromForm] string? password)
-    {
-        try
-        {
-            var userId = _tokenService.GetUserIdFromToken();
-            await _roomService.JoinRoom(id, userId, password, null);
-
-            return NoContent();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ex);
-        }
-    }
-
-    [Authorize]
-    [HttpPost("{code}/joinCode")]
+    [HttpPost("{code}/join")]
     public async Task<ActionResult> JoinRoomByCode(string code, [FromForm] string? password)
     {
         try
         {
             var userId = _tokenService.GetUserIdFromToken();
-            await _roomService.JoinRoom(null, userId, password, code);
+            await _roomService.JoinRoom(userId, password, code);
 
             return NoContent();
         }

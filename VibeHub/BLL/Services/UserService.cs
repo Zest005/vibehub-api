@@ -66,7 +66,6 @@ public class UserService : IUserService
 
         user = await _filterUtility.Filter(user);
 
-        existingUser.Name = user.Name;
         existingUser.Email = user.Email;
         existingUser.Nickname = user.Nickname;
         existingUser.Password = user.Password;
@@ -77,7 +76,7 @@ public class UserService : IUserService
         await _userRepository.Update(existingUser);
     }
 
-    public async Task Update(Guid id, UserDto userDto)
+    public async Task UpdateDto(Guid id, UserDto userDto)
     {
         string? fileData = null;
 
@@ -104,7 +103,6 @@ public class UserService : IUserService
 
         userDto = await _filterUtility.Filter(userDto);
 
-        targetUser.Name = userDto.Name ?? targetUser.Name;
         targetUser.Nickname = userDto.Nickname ?? targetUser.Nickname;
         targetUser.Email = userDto.Email ?? targetUser.Email;
         targetUser.Password = userDto.Password ?? targetUser.Password;

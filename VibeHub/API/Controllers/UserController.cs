@@ -65,7 +65,7 @@ public class UserController : ControllerBase
         try
         {
             var userId = _tokenService.GetUserIdFromToken();
-            await _userService.Update(userId, user);
+            await _userService.UpdateDto(userId, user);
             return NoContent();
         }
         catch (KeyNotFoundException)

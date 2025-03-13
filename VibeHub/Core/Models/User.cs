@@ -6,8 +6,6 @@ namespace Core.Models;
 public class User : BaseEntity
 {
     [MinLength(3)]
-    public string Name { get; set; }
-    [MinLength(3)]
     public string Nickname { get; set; }
     [EmailAddress]
     public string Email { get; set; }

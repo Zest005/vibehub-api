@@ -145,16 +145,13 @@ public class RoomService : IRoomService
         return targetRoom;
     }
 
-    public async Task JoinRoom(Guid? roomId, Guid userId, string? password, string? code)
+    public async Task JoinRoom(Guid userId, string? password, string? code)
     {
         Room? targetRoom = null;
         
         var targetUser = await _userRepository.GetById(userId);
-        if (roomId != null)
-        {
-            targetRoom = await _roomRepository.GetById((Guid)roomId);
-        }
-        else if (code != null)
+        
+        if (code != null)
         {
             targetRoom = await _roomRepository.GetByCode(code);    
         }
