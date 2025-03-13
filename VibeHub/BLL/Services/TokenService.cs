@@ -23,10 +23,12 @@ public class TokenService : ITokenService
     public Guid GetUserIdFromToken()
     {
         var httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext == null) throw new InvalidOperationException("HttpContext is null");
+        if (httpContext == null)
+            throw new InvalidOperationException("HttpContext is null");
 
         var token = httpContext.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-        if (string.IsNullOrEmpty(token)) throw new UnauthorizedAccessException("No token found");
+        if (string.IsNullOrEmpty(token))
+            throw new UnauthorizedAccessException("No token found");
 
         var tokenHandler = new JwtSecurityTokenHandler();
         var jwtToken = tokenHandler.ReadJwtToken(token);

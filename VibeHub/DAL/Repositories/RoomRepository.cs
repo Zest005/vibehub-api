@@ -22,8 +22,17 @@ public class RoomRepository : IRoomRepository
     public async Task<Room> GetById(Guid id)
     {
         return await _context.Rooms
-            .Include(music => music.Playlist)
+            .Include(room => room.Playlist)
+            .Include(room => room.Settings)
             .FirstOrDefaultAsync(room => room.Id == id);
+    }
+
+    public async Task<Room> GetByCode(string code)
+    {
+        return await _context.Rooms
+            .Include(room => room.Playlist)
+            .Include(room => room.Settings)
+            .FirstOrDefaultAsync(room => room.Code == code);
     }
 
     public async Task Add(Room room)

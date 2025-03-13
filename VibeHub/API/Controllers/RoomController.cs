@@ -30,7 +30,7 @@ public class RoomController : ControllerBase
 
     // GET api/Room/5
     [HttpGet("{id}")]
-    public async Task<ActionResult<Room>> Get(Guid id)
+    public async Task<ActionResult<Room>> GetById(Guid id)
     {
         var room = await _roomService.GetById(id);
         if (room == null) return NotFound();
@@ -40,7 +40,7 @@ public class RoomController : ControllerBase
     // POST api/Room
     [Authorize]
     [HttpPost]
-    public async Task<ActionResult<Room>> Post()
+    public async Task<ActionResult<Room>> Create()
     {
         try
         {
@@ -56,47 +56,30 @@ public class RoomController : ControllerBase
     }
 
     [Authorize]
-    [HttpPut("{id}/addSongs")]
-    public async Task<IActionResult> AddSongs(Guid id, [FromForm, MinLength(1)] List<IFormFile> files)
-    {
-        try
-        {
-            var userId = _tokenService.GetUserIdFromToken();
-            var room = await _roomService.AddMusics(id, userId, files);
-
-            return Ok(room);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ex);
-        }
-    }
-
-    [Authorize]
-    [HttpPut("{id}/deleteSongs")]
-    public async Task<IActionResult> DeleteSongs(Guid id, [FromBody, MinLength(1)] List<Guid> musicList)
-    {
-        try
-        {
-            var userId = _tokenService.GetUserIdFromToken();
-            var room = await _roomService.RemoveMusics(id, userId, musicList);
-
-            return Ok(room);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ex);
-        }
-    }
-
-    [Authorize]
     [HttpPost("{id}/join")]
-    public async Task<ActionResult> JoinRoom(Guid id)
+    public async Task<ActionResult> JoinRoom(Guid id, [FromForm] string? password)
     {
         try
         {
             var userId = _tokenService.GetUserIdFromToken();
-            await _roomService.JoinRoom(id, userId);
+            await _roomService.JoinRoom(id, userId, password, null);
+
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex);
+        }
+    }
+
+    [Authorize]
+    [HttpPost("{code}/joinCode")]
+    public async Task<ActionResult> JoinRoomByCode(string code, [FromForm] string? password)
+    {
+        try
+        {
+            var userId = _tokenService.GetUserIdFromToken();
+            await _roomService.JoinRoom(null, userId, password, code);
 
             return NoContent();
         }
@@ -122,8 +105,62 @@ public class RoomController : ControllerBase
             return BadRequest(ex);
         }
     }
-    //
+
+    [Authorize]
+    [HttpPut("{id}/addSongs")]
+    public async Task<IActionResult> AddSongs(Guid id, [FromForm] [MinLength(1)] List<IFormFile> files)
+    {
+        try
+        {
+            var userId = _tokenService.GetUserIdFromToken();
+            var room = await _roomService.AddMusics(id, userId, files);
+
+            return Ok(room);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex);
+        }
+    }
+
+    [Authorize]
+    [HttpPut("{id}/deleteSongs")]
+    public async Task<IActionResult> DeleteSongs(Guid id, [FromBody] [MinLength(1)] List<Music> musicList)
+    {
+        try
+        {
+            var userId = _tokenService.GetUserIdFromToken();
+            var room = await _roomService.RemoveMusics(id, userId, musicList);
+
+            return Ok(room);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex);
+        }
+    }
+
     // // PUT api/Room/5
+    [Authorize]
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] RoomSettings roomSettings)
+    {
+        try
+        {
+            var userId = _tokenService.GetUserIdFromToken();
+            await _roomService.Update(id, userId, roomSettings);
+
+            return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
 
     // DELETE api/Room/5
     [Authorize]
@@ -141,22 +178,4 @@ public class RoomController : ControllerBase
             return NotFound();
         }
     }
-
-    // [HttpPut("{id}")]
-    // public async Task<IActionResult> Put(Guid id, [FromBody] Room room)
-    // {
-    //     try
-    //     {
-    //         await _roomService.Update(id, room);
-    //         return NoContent();
-    //     }
-    //     catch (KeyNotFoundException)
-    //     {
-    //         return NotFound();
-    //     }
-    //     catch (InvalidOperationException ex)
-    //     {
-    //         return BadRequest(ex.Message);
-    //     }
-    // }
 }

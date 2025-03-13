@@ -1,93 +1,96 @@
 using BLL.Abstractions.Services;
+using Core.DTO;
 using Core.Models;
-using DAL.Abstractions.Interfaces;
-using DAL.Context;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
-namespace API.Controllers
+namespace API.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class UserController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class UserController : ControllerBase
+    private readonly IUserService _userService;
+    private readonly ITokenService _tokenService;
+
+    public UserController(IUserService userService, ITokenService tokenService)
     {
-        private readonly IUserService _userService;
+        _userService = userService;
+        _tokenService = tokenService;
+    }
 
-        public UserController(IUserService userService)
+    // GET api/User
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<User>>> Get()
+    {
+        var users = await _userService.GetList();
+        return Ok(users);
+    }
+
+    // GET api/User/5
+    [HttpGet("{id}")]
+    public async Task<ActionResult<User>> Get(Guid id)
+    {
+        try
         {
-            _userService = userService;
+            var user = await _userService.GetById(id);
+            return Ok(user);
         }
-
-        // GET api/User
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> Get()
+        catch (KeyNotFoundException)
         {
-            var users = await _userService.GetList();
-            return Ok(users);
+            return NotFound();
         }
+    }
 
-        // GET api/User/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<User>> Get(Guid id)
+    // POST api/User
+    [HttpPost]
+    public async Task<ActionResult<User>> Post([FromBody] User user)
+    {
+        try
         {
-            try
-            {
-                var user = await _userService.GetById(id);
-                return Ok(user);
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
+            await _userService.Add(user);
+            return CreatedAtAction("Get", new { id = user.Id }, user);
         }
-
-        // POST api/User
-        [HttpPost]
-        public async Task<ActionResult<User>> Post([FromBody] User user)
+        catch (InvalidOperationException ex)
         {
-            try
-            {
-                await _userService.Add(user);
-                return CreatedAtAction("Get", new { id = user.Id }, user);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return BadRequest(ex.Message);
         }
+    }
 
-        // PUT api/User/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Put(Guid id, [FromBody] User user)
+    // PUT api/User/5
+    [Authorize]
+    [HttpPut]
+    public async Task<IActionResult> Put([FromForm] UserDto user)
+    {
+        try
         {
-            try
-            {
-                await _userService.Update(id, user);
-                return NoContent();
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var userId = _tokenService.GetUserIdFromToken();
+            await _userService.Update(userId, user);
+            return NoContent();
         }
-
-        // DELETE api/User/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
+        catch (KeyNotFoundException)
         {
-            try
-            {
-                await _userService.Delete(id);
-                return NoContent();
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
+            return NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    // DELETE api/User/5
+    [Authorize]
+    [HttpDelete]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        try
+        {
+            await _userService.Delete(id);
+            return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
         }
     }
 }

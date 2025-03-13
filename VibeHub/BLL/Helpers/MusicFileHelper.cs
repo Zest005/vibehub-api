@@ -49,8 +49,10 @@ internal class MusicFileHelper : IMusicFileHelper
 
         using var tagFile = TagLib.File.Create(filePath, ReadStyle.Average);
 
-        if (!string.IsNullOrWhiteSpace(tagFile.Tag.Title)) songTitle = tagFile.Tag.Title;
-        if (tagFile.Tag.Performers.Length > 0) artistName = tagFile.Tag.Performers[0];
+        if (!string.IsNullOrWhiteSpace(tagFile.Tag.Title)) 
+            songTitle = tagFile.Tag.Title;
+        if (tagFile.Tag.Performers.Length > 0)
+            artistName = tagFile.Tag.Performers[0];
 
         var music = new Music
         {
