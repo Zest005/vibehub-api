@@ -1,41 +1,46 @@
+using System.Text;
+using System.Text.Json.Serialization;
 using BLL;
 using DAL;
 using DAL.Context;
-
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
 
-namespace API
+namespace API;
+
+public class Program
 {
-    public class Program
+    public static void Main(string[] args)
     {
-        public static void Main(string[] args)
-        {
-            var builder = WebApplication.CreateBuilder(args);
+        var builder = WebApplication.CreateBuilder(args);
 
-            var connectionString = builder.Configuration.GetConnectionString("VibeHubDatabase");
-            
-            builder.Services.AddControllers();
-            builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseNpgsql(connectionString));
-            builder.Services.Configure<FormOptions>(options =>
+        var connectionString = builder.Configuration.GetConnectionString("VibeHubDatabase");
+
+        builder.Services.AddControllers();
+        builder.Services.AddDbContext<AppDbContext>(options =>
+            options.UseNpgsql(connectionString));
+        builder.Services.Configure<FormOptions>(options => { options.MultipartBodyLengthLimit = 10 * 1024 * 1024; });
+        builder.Services.AddFluentValidationAutoValidation();
+        builder.Services.AddOpenApi();
+        builder.Services.AddBusinessLogicLayer();
+        builder.Services.AddDataAccessLayer();
+        builder.Services.AddHttpContextAccessor();
+
+        builder.Services.AddControllers()
+            .AddNewtonsoftJson(options =>
             {
-                options.MultipartBodyLengthLimit = 10 * 1024 * 1024; 
+                options.SerializerSettings.ReferenceLoopHandling = 
+                    Newtonsoft.Json.ReferenceLoopHandling.Ignore;
             });
-            builder.Services.AddFluentValidationAutoValidation();
-            builder.Services.AddOpenApi();
-            builder.Services.AddBusinessLogicLayer();
-            builder.Services.AddDataAccessLayer();
+        
+        var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
 
-            var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
-
-            builder.Services.AddAuthentication(options =>
+        builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -53,57 +58,57 @@ namespace API
                     ClockSkew = TimeSpan.Zero
                 };
             });
+        
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen(c =>
+        {
+            c.SwaggerDoc("v1", new OpenApiInfo { Title = "VibeHub API", Version = "v1" });
 
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen(c =>
+            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "VibeHub API", Version = "v1" });
-
-                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-                {
-                    Description = "JWT Authorization header using the Bearer scheme.",
-                    Name = "Authorization",
-                    In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.ApiKey,
-                    Scheme = "Bearer"
-                });
-
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement
-                {
-                    {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
-                            }
-                        },
-                        new string[] {}
-                    }
-                });
+                Description = "JWT Authorization header using the Bearer scheme.",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Scheme = "Bearer"
             });
 
-            var app = builder.Build();
-
-            if (app.Environment.IsDevelopment())
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement
             {
-                app.UseSwagger();
-                app.UseSwaggerUI(c =>
                 {
-                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "VibeHub API v1");
-                    c.RoutePrefix = string.Empty; 
-                });
-                
-                app.MapOpenApi();
-            }
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    new string[] { }
+                }
+            });
+        });
 
-            app.UseAuthentication();
-            app.UseAuthorization();
+        var app = builder.Build();
 
-            app.MapControllers();
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "VibeHub API v1");
+                c.RoutePrefix = string.Empty;
+            });
 
-            app.Run();
+            app.MapOpenApi();
         }
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.MapControllers();
+
+
+        app.Run();
     }
 }

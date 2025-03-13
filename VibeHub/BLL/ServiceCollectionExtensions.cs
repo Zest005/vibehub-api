@@ -1,5 +1,8 @@
+
+using BLL.Abstractions.Helpers;
 using BLL.Abstractions.Services;
 using BLL.Abstractions.Utilities;
+using BLL.Helpers;
 using BLL.Services;
 using BLL.Utilities;
 using BLL.Validators;
@@ -22,10 +25,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthService, AuthService>();
 
         services.AddSingleton<IFilterUtility, FilterUtility>();
-        
+        services.AddSingleton<IMusicFileHelper, MusicFileHelper>();
+      
         services.AddScoped<IValidator<User>, UserValidator>();
         services.AddScoped<IValidator<Room>, RoomValidator>();
         services.AddScoped<IValidator<MessageDto>, MessageValidator>();
-        services.AddScoped<IValidator<MusicDto>, MusicDtoValidator>();
     }
 }

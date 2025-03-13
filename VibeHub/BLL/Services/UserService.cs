@@ -8,23 +8,24 @@ namespace BLL.Services;
 
 public class UserService : IUserService
 {
-    private readonly IUserRepository _userRepository;
     private readonly IFilterUtility _filterUtility;
     private readonly ILogger<UserService> _logger;
+    private readonly IRoomRepository _roomRepository;
+    private readonly IUserRepository _userRepository;
 
-    public UserService(IFilterUtility filterUtility, ILogger<UserService> logger, IUserRepository userRepository)
+    public UserService(IFilterUtility filterUtility, ILogger<UserService> logger, IUserRepository userRepository,
+        IRoomRepository roomRepository)
     {
         _filterUtility = filterUtility;
         _logger = logger;
         _userRepository = userRepository;
+        _roomRepository = roomRepository;
     }
 
     public async Task Add(User user)
     {
         if (await _userRepository.Exists(user.Id))
-        {
             throw new InvalidOperationException("A user with the same ID already exists.");
-        }
 
         await _userRepository.Add(user);
     }
@@ -32,10 +33,7 @@ public class UserService : IUserService
     public async Task Delete(Guid id)
     {
         var user = await _userRepository.GetById(id);
-        if (user == null)
-        {
-            throw new KeyNotFoundException("User not found.");
-        }
+        if (user == null) throw new KeyNotFoundException("User not found.");
 
         await _userRepository.Delete(id);
     }
@@ -43,10 +41,7 @@ public class UserService : IUserService
     public async Task<User> GetById(Guid id)
     {
         var user = await _userRepository.GetById(id);
-        if (user == null)
-        {
-            throw new KeyNotFoundException("User not found.");
-        }
+        if (user == null) throw new KeyNotFoundException("User not found.");
 
         return user;
     }
@@ -59,10 +54,7 @@ public class UserService : IUserService
     public async Task Update(Guid id, User user)
     {
         var existingUser = await _userRepository.GetById(id);
-        if (existingUser == null)
-        {
-            throw new KeyNotFoundException("User not found.");
-        }
+        if (existingUser == null) throw new KeyNotFoundException("User not found.");
 
         existingUser.Name = user.Name;
         existingUser.Email = user.Email;
