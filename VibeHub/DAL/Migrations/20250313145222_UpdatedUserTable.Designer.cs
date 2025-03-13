@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DAL.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250311205702_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250313145222_UpdatedUserTable")]
+    partial class UpdatedUserTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -83,9 +83,6 @@ namespace DAL.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("Availability")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("Code")
                         .HasColumnType("text");
 
@@ -100,11 +97,36 @@ namespace DAL.Migrations
                     b.ToTable("Rooms");
                 });
 
+            modelBuilder.Entity("Core.Models.RoomSettings", b =>
+                {
+                    b.Property<Guid>("RoomId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("AllowUsersUpdateMusic")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("Availability")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Password")
+                        .HasColumnType("text");
+
+                    b.Property<short>("UsersLimit")
+                        .HasColumnType("smallint");
+
+                    b.HasKey("RoomId");
+
+                    b.ToTable("RoomSettings");
+                });
+
             modelBuilder.Entity("Core.Models.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Avatar")
+                        .HasColumnType("text");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -112,10 +134,6 @@ namespace DAL.Migrations
 
                     b.Property<bool>("IsAdmin")
                         .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<string>("Nickname")
                         .IsRequired()
@@ -164,6 +182,17 @@ namespace DAL.Migrations
                         .HasForeignKey("RoomId");
                 });
 
+            modelBuilder.Entity("Core.Models.RoomSettings", b =>
+                {
+                    b.HasOne("Core.Models.Room", "Room")
+                        .WithOne("Settings")
+                        .HasForeignKey("Core.Models.RoomSettings", "RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Room");
+                });
+
             modelBuilder.Entity("Core.Models.User", b =>
                 {
                     b.HasOne("Core.Models.Room", "Room")
@@ -176,6 +205,9 @@ namespace DAL.Migrations
             modelBuilder.Entity("Core.Models.Room", b =>
                 {
                     b.Navigation("Playlist");
+
+                    b.Navigation("Settings")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

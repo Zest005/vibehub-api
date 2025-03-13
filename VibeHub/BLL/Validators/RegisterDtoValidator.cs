@@ -1,11 +1,11 @@
-using Core.Models;
+using Core.DTO;
 using FluentValidation;
 
 namespace BLL.Validators;
 
-public class UserValidator : AbstractValidator<User>
+public class RegisterDtoValidator : AbstractValidator<RegisterDto>
 {
-    public UserValidator()
+    public RegisterDtoValidator()
     {
         RuleFor(x => x.Nickname)
             .NotEmpty()

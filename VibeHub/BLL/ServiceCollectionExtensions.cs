@@ -28,7 +28,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IMusicFileHelper, MusicFileHelper>();
       
         services.AddScoped<IValidator<User>, UserValidator>();
-        services.AddScoped<IValidator<Room>, RoomValidator>();
+        services.AddScoped<IValidator<UserDto>, UserDtoValidator>();
+        services.AddScoped<IValidator<RegisterDto>, RegisterDtoValidator>();
+        services.AddScoped<IValidator<RoomSettings>, RoomSettingsValidator>();
         services.AddScoped<IValidator<MessageDto>, MessageValidator>();
     }
 }

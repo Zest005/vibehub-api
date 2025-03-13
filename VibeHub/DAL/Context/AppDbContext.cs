@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<Room> Rooms { get; set; }
     public DbSet<MessageHistory> MessageHistories { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<RoomSettings> RoomSettings { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

@@ -1,15 +1,19 @@
+using System.ComponentModel.DataAnnotations;
 using Core.Base;
 
 namespace Core.Models;
 
 public class User : BaseEntity
 {
-    public string Name { get; set; }
+    [MinLength(3)]
     public string Nickname { get; set; }
+    [EmailAddress]
     public string Email { get; set; }
+    [MinLength(5)]
     public string Password { get; set; }
     public bool IsAdmin { get; set; }
     public string? Token { get; set; }
+    public string? Avatar { get; set; }
 
     public Room? Room { get; set; }
 }
