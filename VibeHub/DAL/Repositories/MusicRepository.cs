@@ -19,7 +19,7 @@ public class MusicRepository : IMusicRepository
         _dbSet = _context.Set<Music>();
     }
 
-    public async Task<Music> GetById(Guid id)
+    public async Task<Music?> GetById(Guid id)
     {
         return await _dbSet.FirstOrDefaultAsync(music => music.Id == id);
     }
@@ -33,8 +33,14 @@ public class MusicRepository : IMusicRepository
 
     public async Task DeleteRange(List<Music> music)
     {
-        _dbSet.AttachRange(music);
+        // _dbSet.AttachRange(music);
         _dbSet.RemoveRange(music);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task Delete(Music music)
+    {
+        _dbSet.Remove(music);
         await _context.SaveChangesAsync();
     }
 

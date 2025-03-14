@@ -46,7 +46,7 @@ public class MusicService : IMusicService
     }
 
 
-    public async Task<IEnumerable<Music>> AddRange(List<IFormFile> musicList)
+    public async Task<IEnumerable<Music>> AddRange(List<IFormFile> musicList, Guid roomId)
     {
         List<Music> playList = [];
 
@@ -61,6 +61,7 @@ public class MusicService : IMusicService
             foreach (var musicFile in musicList)
             {
                 var music = await _musicFileHelper.AddMusicFile(musicFile);
+                music.RoomId = roomId;
                 playList.Add(music);
             }
 
@@ -76,6 +77,20 @@ public class MusicService : IMusicService
         }
     }
 
+    public async Task<Music> Delete(Music music)
+    {
+        try
+        {
+            await _repository.Delete(music);
+            return music;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error deleting music: {ex.Message}");
+            throw;
+        }
+    }
+    
     public async Task DeleteRange(List<Music> musicList)
     {
         try

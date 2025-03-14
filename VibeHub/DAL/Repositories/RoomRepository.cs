@@ -19,7 +19,7 @@ public class RoomRepository : IRoomRepository
         return await _context.Rooms.ToListAsync();
     }
 
-    public async Task<Room> GetById(Guid id)
+    public async Task<Room?> GetById(Guid id)
     {
         return await _context.Rooms
             .Include(room => room.Playlist)
@@ -27,7 +27,7 @@ public class RoomRepository : IRoomRepository
             .FirstOrDefaultAsync(room => room.Id == id);
     }
 
-    public async Task<Room> GetByCode(string code)
+    public async Task<Room?> GetByCode(string code)
     {
         return await _context.Rooms
             .Include(room => room.Playlist)

@@ -64,7 +64,7 @@ public class UserController : ControllerBase
     {
         try
         {
-            var userId = _tokenService.GetUserIdFromToken();
+            var userId = _tokenService.GetIdFromToken();
             await _userService.UpdateDto(userId, user);
             return NoContent();
         }

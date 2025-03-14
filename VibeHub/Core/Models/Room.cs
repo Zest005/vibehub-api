@@ -10,5 +10,5 @@ public class Room : BaseEntity
     public Guid OwnerId { get; set; }
 
     public RoomSettings Settings { get; set; } = null!;
-    public List<Music>? Playlist { get; set; }
+    public List<RoomsMusics> Playlist { get; set; } = [];
 }

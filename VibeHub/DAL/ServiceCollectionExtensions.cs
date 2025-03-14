@@ -12,5 +12,6 @@ public static class ServiceCollectionExtensions
         repositories.AddScoped<IUserRepository, UserRepository>();
         repositories.AddScoped<IRoomRepository, RoomRepository>();
         repositories.AddScoped<IMessageHistoryRepository, MessageHistoryRepository>();
+        repositories.AddScoped<IGuestRepository, GuestRepository>();
     }
 }

@@ -8,6 +8,7 @@ public interface IMusicService
 {
     Task<Music> GetById(Guid id);
     Task<FileStreamResult> GetFileById(Guid id);
-    Task<IEnumerable<Music>> AddRange(List<IFormFile> musicList);
+    Task<IEnumerable<Music>> AddRange(List<IFormFile> musicList, Guid roomId);
+    Task<Music> Delete(Music music);
     Task DeleteRange(List<Music> musicList);
 }
