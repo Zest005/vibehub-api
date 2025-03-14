@@ -22,6 +22,26 @@ namespace DAL.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Core.Models.Guest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("RoomId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoomId");
+
+                    b.ToTable("Guests");
+                });
+
             modelBuilder.Entity("Core.Models.MessageHistory", b =>
                 {
                     b.Property<Guid>("Id")
@@ -60,7 +80,7 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("RoomId")
+                    b.Property<Guid>("RoomId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Title")
@@ -80,9 +100,6 @@ namespace DAL.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("Availability")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("Code")
                         .HasColumnType("text");
 
@@ -97,11 +114,51 @@ namespace DAL.Migrations
                     b.ToTable("Rooms");
                 });
 
+            modelBuilder.Entity("Core.Models.RoomSettings", b =>
+                {
+                    b.Property<Guid>("RoomId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("AllowUsersUpdateMusic")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("Availability")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Password")
+                        .HasColumnType("text");
+
+                    b.Property<short>("UsersLimit")
+                        .HasColumnType("smallint");
+
+                    b.HasKey("RoomId");
+
+                    b.ToTable("RoomSettings");
+                });
+
+            modelBuilder.Entity("Core.Models.RoomsMusics", b =>
+                {
+                    b.Property<Guid>("MusicId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RoomId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("MusicId", "RoomId");
+
+                    b.HasIndex("RoomId");
+
+                    b.ToTable("RoomsMusics");
+                });
+
             modelBuilder.Entity("Core.Models.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Avatar")
+                        .HasColumnType("text");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -109,10 +166,6 @@ namespace DAL.Migrations
 
                     b.Property<bool>("IsAdmin")
                         .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<string>("Nickname")
                         .IsRequired()
@@ -133,6 +186,15 @@ namespace DAL.Migrations
                     b.HasIndex("RoomId");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Core.Models.Guest", b =>
+                {
+                    b.HasOne("Core.Models.Room", "Room")
+                        .WithMany()
+                        .HasForeignKey("RoomId");
+
+                    b.Navigation("Room");
                 });
 
             modelBuilder.Entity("Core.Models.MessageHistory", b =>
@@ -156,9 +218,43 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("Core.Models.Music", b =>
                 {
-                    b.HasOne("Core.Models.Room", null)
+                    b.HasOne("Core.Models.Room", "Room")
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Room");
+                });
+
+            modelBuilder.Entity("Core.Models.RoomSettings", b =>
+                {
+                    b.HasOne("Core.Models.Room", "Room")
+                        .WithOne("Settings")
+                        .HasForeignKey("Core.Models.RoomSettings", "RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Room");
+                });
+
+            modelBuilder.Entity("Core.Models.RoomsMusics", b =>
+                {
+                    b.HasOne("Core.Models.Music", "Music")
+                        .WithMany()
+                        .HasForeignKey("MusicId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Core.Models.Room", "Room")
                         .WithMany("Playlist")
-                        .HasForeignKey("RoomId");
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Music");
+
+                    b.Navigation("Room");
                 });
 
             modelBuilder.Entity("Core.Models.User", b =>
@@ -173,6 +269,9 @@ namespace DAL.Migrations
             modelBuilder.Entity("Core.Models.Room", b =>
                 {
                     b.Navigation("Playlist");
+
+                    b.Navigation("Settings")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

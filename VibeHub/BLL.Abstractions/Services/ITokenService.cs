@@ -1,10 +1,10 @@
-using Core.DTO;
 using Core.Models;
 
 namespace BLL.Abstractions.Services;
 
 public interface ITokenService
 {
-    string GenerateToken(User user);
+    Guid GetIdFromToken();
+    string GenerateToken(User? user = null, Guest? guest = null);
     bool ValidateToken(string token);
 }

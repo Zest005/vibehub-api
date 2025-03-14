@@ -1,8 +1,8 @@
 using BLL.Abstractions.Services;
-using Core.Models;
 using Core.DTO;
-using Microsoft.AspNetCore.Mvc;
+using Core.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
 

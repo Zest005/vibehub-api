@@ -18,7 +18,6 @@ namespace DAL.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Code = table.Column<string>(type: "text", nullable: true),
                     UserCount = table.Column<short>(type: "smallint", nullable: false),
-                    Availability = table.Column<bool>(type: "boolean", nullable: false),
                     OwnerId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
@@ -46,6 +45,27 @@ namespace DAL.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "RoomSettings",
+                columns: table => new
+                {
+                    RoomId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UsersLimit = table.Column<short>(type: "smallint", nullable: false),
+                    Availability = table.Column<bool>(type: "boolean", nullable: false),
+                    Password = table.Column<string>(type: "text", nullable: true),
+                    MusicAddPermission = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RoomSettings", x => x.RoomId);
+                    table.ForeignKey(
+                        name: "FK_RoomSettings_Rooms_RoomId",
+                        column: x => x.RoomId,
+                        principalTable: "Rooms",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
@@ -56,6 +76,7 @@ namespace DAL.Migrations
                     Password = table.Column<string>(type: "text", nullable: false),
                     IsAdmin = table.Column<bool>(type: "boolean", nullable: false),
                     Token = table.Column<string>(type: "text", nullable: true),
+                    Avatar = table.Column<string>(type: "text", nullable: true),
                     RoomId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
@@ -124,6 +145,9 @@ namespace DAL.Migrations
 
             migrationBuilder.DropTable(
                 name: "Musics");
+
+            migrationBuilder.DropTable(
+                name: "RoomSettings");
 
             migrationBuilder.DropTable(
                 name: "Users");
