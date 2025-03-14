@@ -22,12 +22,15 @@ public class AuthService : IAuthService
             return null;
 
         var token = _tokenService.GenerateToken(user);
+        user.Token = token;
         await _userService.Update(user.Id, user);
         return token;
     }
 
     public async Task Logout(User user)
     {
+        user.Token = null;
+        await _userService.Update(user.Id, user);
         await _userService.Logout(user);
     }
 
