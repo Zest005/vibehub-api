@@ -54,8 +54,13 @@ public class UserRepository : IUserRepository
         return await _context.Users.AnyAsync(e => e.Id == id);
     }
 
-    public async Task<User> GetByEmail(string email)
+    public async Task<User?> GetByEmail(string email)
     {
         return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+    }
+
+    public async Task<User?> GetByNickname(string nickname)
+    {
+        return await _context.Users.FirstOrDefaultAsync(u => u.Nickname == nickname);
     }
 }

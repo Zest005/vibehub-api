@@ -10,5 +10,6 @@ public interface IUserRepository
     Task Update(User user);
     Task Delete(Guid id);
     Task<bool> Exists(Guid id);
-    Task<User> GetByEmail(string email);
+    Task<User?> GetByEmail(string email);
+    Task<User?> GetByNickname(string nickname);
 }

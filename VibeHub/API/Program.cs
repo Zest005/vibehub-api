@@ -1,11 +1,9 @@
 using System.Text;
-using System.Text.Json.Serialization;
 using BLL;
 using DAL;
 using DAL.Context;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -21,7 +19,9 @@ public class Program
 
         builder.Services.AddControllers();
         builder.Services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+            options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+                   .EnableSensitiveDataLogging(builder.Environment.IsDevelopment()));
+
         builder.Services.Configure<FormOptions>(options => { options.MultipartBodyLengthLimit = 10 * 1024 * 1024; });
         builder.Services.AddFluentValidationAutoValidation();
         builder.Services.AddOpenApi();
@@ -103,12 +103,9 @@ public class Program
         }
 
         app.UseHttpsRedirection();
-
         app.UseAuthentication();
         app.UseAuthorization();
-
         app.MapControllers();
-
 
         app.Run();
     }

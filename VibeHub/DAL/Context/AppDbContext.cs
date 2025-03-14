@@ -19,14 +19,6 @@ public class AppDbContext : DbContext
     public AppDbContext(DbContextOptions<AppDbContext> options, IConfiguration configuration) : base(options)
     {
         _configuration = configuration;
-        Database.OpenConnection();
-    }
-    
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        var connectionString = _configuration.GetConnectionString("DefaultConnection");
-        optionsBuilder.UseNpgsql(connectionString);
-        optionsBuilder.EnableSensitiveDataLogging();
     }
 
     protected override void OnModelCreating(ModelBuilder builder)

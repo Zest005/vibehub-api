@@ -7,6 +7,8 @@ using Microsoft.Extensions.Logging;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Processing;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace BLL.Services;
 
@@ -71,7 +73,7 @@ public class UserService : IUserService
         existingUser.Password = user.Password;
         existingUser.Room = user.Room;
         existingUser.Token = user.Token;
-
+        existingUser.Salt = user.Salt;
 
         await _userRepository.Update(existingUser);
     }
@@ -114,7 +116,7 @@ public class UserService : IUserService
     public async Task<User> Authenticate(string email, string password)
     {
         var user = await _userRepository.GetByEmail(email);
-        if (user == null || user.Password != password)
+        if (user == null || !VerifyPasswordHash(password, user.Password, user.Salt))
             return null;
 
         return user;
@@ -124,5 +126,25 @@ public class UserService : IUserService
     {
         user.Token = null;
         await _userRepository.Update(user);
+    }
+
+    public async Task<User?> GetByEmail(string email)
+    {
+        return await _userRepository.GetByEmail(email);
+    }
+
+    public async Task<User?> GetByNickname(string nickname)
+    {
+        return await _userRepository.GetByNickname(nickname);
+    }
+
+    private bool VerifyPasswordHash(string password, string storedHash, string storedSalt)
+    {
+        var saltBytes = Convert.FromBase64String(storedSalt);
+        using var hmac = new HMACSHA512(saltBytes);
+        var passwordBytes = Encoding.UTF8.GetBytes(password);
+        var computedHash = Convert.ToBase64String(hmac.ComputeHash(passwordBytes));
+
+        return computedHash == storedHash;
     }
 }
