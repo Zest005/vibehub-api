@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using BLL.Abstractions.Services;
+using Core.DTO;
 using Core.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -44,7 +45,7 @@ public class RoomController : ControllerBase
     {
         try
         {
-            var userId = _tokenService.GetUserIdFromToken();
+            var userId = _tokenService.GetIdFromToken();
             var createdRoom = await _roomService.Create(userId);
 
             return CreatedAtAction("Get", new { id = createdRoom.Id }, createdRoom);
@@ -61,7 +62,7 @@ public class RoomController : ControllerBase
     {
         try
         {
-            var userId = _tokenService.GetUserIdFromToken();
+            var userId = _tokenService.GetIdFromToken();
             await _roomService.JoinRoom(userId, password, code);
 
             return NoContent();
@@ -78,7 +79,7 @@ public class RoomController : ControllerBase
     {
         try
         {
-            var userId = _tokenService.GetUserIdFromToken();
+            var userId = _tokenService.GetIdFromToken();
             await _roomService.LeaveRoom(id, userId);
 
             return NoContent();
@@ -95,7 +96,7 @@ public class RoomController : ControllerBase
     {
         try
         {
-            var userId = _tokenService.GetUserIdFromToken();
+            var userId = _tokenService.GetIdFromToken();
             var room = await _roomService.AddMusics(id, userId, files);
 
             return Ok(room);
@@ -108,11 +109,11 @@ public class RoomController : ControllerBase
 
     [Authorize]
     [HttpPut("{id}/deleteSongs")]
-    public async Task<IActionResult> DeleteSongs(Guid id, [FromBody] [MinLength(1)] List<Music> musicList)
+    public async Task<IActionResult> DeleteSongs(Guid id, [FromBody] [MinLength(1)] List<RoomsMusicsDto> musicList)
     {
         try
         {
-            var userId = _tokenService.GetUserIdFromToken();
+            var userId = _tokenService.GetIdFromToken();
             var room = await _roomService.RemoveMusics(id, userId, musicList);
 
             return Ok(room);
@@ -123,6 +124,23 @@ public class RoomController : ControllerBase
         }
     }
 
+    [Authorize]
+    [HttpPut("{roomId}/kick/{targetUserId}")]
+    public async Task<IActionResult> Kick(Guid roomId, Guid targetUserId)
+    {
+        try
+        {
+            var userId = _tokenService.GetIdFromToken();
+            await _roomService.KickUser(userId, targetUserId, roomId);
+            
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+    
     // // PUT api/Room/5
     [Authorize]
     [HttpPut("{id}")]
@@ -130,7 +148,7 @@ public class RoomController : ControllerBase
     {
         try
         {
-            var userId = _tokenService.GetUserIdFromToken();
+            var userId = _tokenService.GetIdFromToken();
             await _roomService.Update(id, userId, roomSettings);
 
             return NoContent();
@@ -152,7 +170,7 @@ public class RoomController : ControllerBase
     {
         try
         {
-            var userId = _tokenService.GetUserIdFromToken();
+            var userId = _tokenService.GetIdFromToken();
             await _roomService.Delete(id, userId);
             return NoContent();
         }

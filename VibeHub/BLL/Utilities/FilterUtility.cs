@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace BLL.Utilities;
 
-public class FilterUtility : IFilterUtility
+internal class FilterUtility : IFilterUtility
 {
     private readonly ILogger<FilterUtility> _logger;
 

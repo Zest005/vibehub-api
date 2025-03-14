@@ -19,7 +19,7 @@ public class UserRepository : IUserRepository
         return await _context.Users.ToListAsync();
     }
 
-    public async Task<User> GetById(Guid id)
+    public async Task<User?> GetById(Guid id)
     {
         return await _context.Users
             .Include(user => user.Room)

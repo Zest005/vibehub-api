@@ -23,9 +23,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IMessageHistoryService, MessageHistoryService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IGuestService, GuestService>();
 
         services.AddSingleton<IFilterUtility, FilterUtility>();
         services.AddSingleton<IMusicFileHelper, MusicFileHelper>();
+        services.AddSingleton<IGeneratorUtility, GeneratorUtility>();
       
         services.AddScoped<IValidator<User>, UserValidator>();
         services.AddScoped<IValidator<UserDto>, UserDtoValidator>();

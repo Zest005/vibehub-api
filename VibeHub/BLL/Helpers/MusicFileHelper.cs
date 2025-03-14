@@ -88,6 +88,7 @@ internal class MusicFileHelper : IMusicFileHelper
         if (filePath.Length != 0)
         {
             File.Delete(filePath[0]);
+            return;
         }
 
         _logger.LogWarning("File " + fileName + "is not founded");
