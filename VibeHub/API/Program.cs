@@ -16,7 +16,7 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-
+      
         builder.Services.AddControllers();
         builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
@@ -28,7 +28,6 @@ public class Program
         builder.Services.AddBusinessLogicLayer();
         builder.Services.AddDataAccessLayer();
         builder.Services.AddHttpContextAccessor();
-
         builder.Services.AddControllers()
             .AddNewtonsoftJson(options =>
             {
@@ -106,7 +105,7 @@ public class Program
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
-
+      
         app.Run();
     }
 }

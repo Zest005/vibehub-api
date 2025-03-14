@@ -23,6 +23,7 @@ public class AuthService : IAuthService
     public async Task<string> Login(LoginDto loginDto)
     {
         var user = await _userService.Authenticate(loginDto.Email, loginDto.Password);
+
         if (user == null || !VerifyPasswordHash(loginDto.Password, user.Password, user.Salt))
         {
             _logger.LogWarning("Invalid login attempt for email: {Email}", loginDto.Email);
@@ -32,6 +33,7 @@ public class AuthService : IAuthService
         var token = _tokenService.GenerateToken(user);
         user.Token = token;
         await _userService.Update(user.Id, user);
+        
         return token;
     }
 
@@ -45,6 +47,7 @@ public class AuthService : IAuthService
     public async Task<User> Register(RegisterDto registerDto)
     {
         var existingUserByEmail = await _userService.GetByEmail(registerDto.Email);
+        
         if (existingUserByEmail != null)
         {
             _logger.LogWarning("Email already registered: {Email}", registerDto.Email);
@@ -52,6 +55,7 @@ public class AuthService : IAuthService
         }
 
         var existingUserByNickname = await _userService.GetByNickname(registerDto.Nickname);
+        
         if (existingUserByNickname != null)
         {
             _logger.LogWarning("Nickname already registered: {Nickname}", registerDto.Nickname);
@@ -71,6 +75,7 @@ public class AuthService : IAuthService
         };
 
         await _userService.Add(user);
+        
         return user;
     }
 

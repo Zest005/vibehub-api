@@ -26,6 +26,7 @@ public class TokenService : ITokenService
     public Guid GetIdFromToken()
     {
         var httpContext = _httpContextAccessor.HttpContext;
+        
         if (httpContext == null)
         {
             _logger.LogError("HttpContext is null");
@@ -33,6 +34,7 @@ public class TokenService : ITokenService
         }
 
         var token = httpContext.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+        
         if (string.IsNullOrEmpty(token))
         {
             _logger.LogWarning("No token found in request headers");
@@ -43,6 +45,7 @@ public class TokenService : ITokenService
         var jwtToken = tokenHandler.ReadJwtToken(token);
 
         var userIdString = jwtToken.Claims.FirstOrDefault(c => c.Type == "nameid")?.Value;
+        
         if (string.IsNullOrEmpty(userIdString))
         {
             _logger.LogWarning("User ID not found in token");
@@ -75,6 +78,7 @@ public class TokenService : ITokenService
         }
         else if (guest is not null)
         {
+
             claims.Add(new Claim(ClaimTypes.NameIdentifier, guest.Id.ToString()));
         }
 
@@ -88,7 +92,7 @@ public class TokenService : ITokenService
         };
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
-
+        
         return tokenHandler.WriteToken(token);
     }
 
@@ -96,6 +100,7 @@ public class TokenService : ITokenService
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]);
+        
         try
         {
             tokenHandler.ValidateToken(token, new TokenValidationParameters

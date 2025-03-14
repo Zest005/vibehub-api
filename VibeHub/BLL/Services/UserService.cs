@@ -34,12 +34,14 @@ public class UserService : IUserService
             throw new InvalidOperationException("A user with the same ID already exists.");
 
         user = await _filterUtility.Filter(user);
+        
         await _userRepository.Add(user);
     }
 
     public async Task Delete(Guid id)
     {
         var user = await _userRepository.GetById(id);
+        
         if (user == null)
             throw new KeyNotFoundException("User not found.");
 
@@ -49,6 +51,7 @@ public class UserService : IUserService
     public async Task<User> GetById(Guid id)
     {
         var user = await _userRepository.GetById(id);
+        
         if (user == null)
             throw new KeyNotFoundException("User not found.");
 
@@ -63,6 +66,7 @@ public class UserService : IUserService
     public async Task Update(Guid id, User user)
     {
         var existingUser = await _userRepository.GetById(id);
+        
         if (existingUser == null)
             throw new KeyNotFoundException("User not found.");
 
@@ -86,7 +90,6 @@ public class UserService : IUserService
 
         if (targetUser == null)
             throw new KeyNotFoundException("User not found.");
-
 
         if (userDto.Avatar != null)
         {
@@ -125,6 +128,7 @@ public class UserService : IUserService
     public async Task Logout(User user)
     {
         user.Token = null;
+        
         await _userRepository.Update(user);
     }
 
