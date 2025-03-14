@@ -19,11 +19,9 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        var connectionString = builder.Configuration.GetConnectionString("VibeHubDatabase");
-
         builder.Services.AddControllers();
         builder.Services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
         builder.Services.Configure<FormOptions>(options => { options.MultipartBodyLengthLimit = 10 * 1024 * 1024; });
         builder.Services.AddFluentValidationAutoValidation();
         builder.Services.AddOpenApi();
@@ -93,6 +91,7 @@ public class Program
 
         if (app.Environment.IsDevelopment())
         {
+            app.UseDeveloperExceptionPage();
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
@@ -102,6 +101,8 @@ public class Program
 
             app.MapOpenApi();
         }
+
+        app.UseHttpsRedirection();
 
         app.UseAuthentication();
         app.UseAuthorization();
