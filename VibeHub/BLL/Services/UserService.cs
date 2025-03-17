@@ -75,7 +75,7 @@ public class UserService : IUserService
         existingUser.Nickname = user.Nickname;
         existingUser.Password = user.Password;
         existingUser.Room = user.Room;
-        existingUser.Token = user.Token;
+        existingUser.SessionId = user.SessionId;
         existingUser.Salt = user.Salt;
 
         await _userRepository.Update(existingUser);
@@ -118,6 +118,7 @@ public class UserService : IUserService
     public async Task<User> Authenticate(string email, string password)
     {
         var user = await _userRepository.GetByEmail(email);
+
         if (user == null || !_passwordManagerUtility.VerifyPasswordHash(password, user.Password, user.Salt))
             return null;
 
@@ -126,7 +127,7 @@ public class UserService : IUserService
 
     public async Task Logout(User user)
     {
-        user.Token = null;
+        user.SessionId = null;
         
         await _userRepository.Update(user);
     }

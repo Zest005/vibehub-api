@@ -38,12 +38,14 @@ public class RoomRepository : IRoomRepository
     public async Task Add(Room room)
     {
         _context.Rooms.Add(room);
+
         await _context.SaveChangesAsync();
     }
 
     public async Task Update(Room room)
     {
         _context.Entry(room).State = EntityState.Modified;
+
         await _context.SaveChangesAsync();
     }
 
@@ -54,6 +56,7 @@ public class RoomRepository : IRoomRepository
         if (room != null)
         {
             _context.Rooms.Remove(room);
+
             await _context.SaveChangesAsync();
         }
     }

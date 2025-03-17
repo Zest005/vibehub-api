@@ -1,5 +1,4 @@
 using BLL.Abstractions.Helpers;
-using BLL.Abstractions.Utilities;
 using Core.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -51,6 +50,7 @@ internal class MusicFileHelper : IMusicFileHelper
 
         if (!string.IsNullOrWhiteSpace(tagFile.Tag.Title)) 
             songTitle = tagFile.Tag.Title;
+
         if (tagFile.Tag.Performers.Length > 0)
             artistName = tagFile.Tag.Performers[0];
 
@@ -68,7 +68,8 @@ internal class MusicFileHelper : IMusicFileHelper
     {
         var filePath = Directory.GetFiles(_uploadPath, fileName);
 
-        if (!File.Exists(filePath[0])) return null;
+        if (!File.Exists(filePath[0]))
+            return null;
 
         var fileExtension = Path.GetExtension(filePath[0]).ToLower();
         var mimeType = _allowedMimeTypes.GetValueOrDefault(fileExtension, "application/octet-stream");
@@ -88,6 +89,7 @@ internal class MusicFileHelper : IMusicFileHelper
         if (filePath.Length != 0)
         {
             File.Delete(filePath[0]);
+
             return;
         }
 
@@ -98,8 +100,7 @@ internal class MusicFileHelper : IMusicFileHelper
     {
         var fileExtension = Path.GetExtension(musicFile.FileName).ToLower();
 
-        return _allowedMimeTypes.ContainsKey(fileExtension) &&
-               musicFile.ContentType == _allowedMimeTypes[fileExtension];
+        return _allowedMimeTypes.ContainsKey(fileExtension) && musicFile.ContentType == _allowedMimeTypes[fileExtension];
     }
 
     public async Task TryDeleteFiles(List<string> fileNames)

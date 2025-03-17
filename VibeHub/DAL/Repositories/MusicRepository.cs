@@ -28,19 +28,21 @@ public class MusicRepository : IMusicRepository
     {
         await _dbSet.AddRangeAsync(music);
         await _context.SaveChangesAsync();
+
         return true;
     }
 
     public async Task DeleteRange(List<Music> music)
     {
-        // _dbSet.AttachRange(music);
         _dbSet.RemoveRange(music);
+
         await _context.SaveChangesAsync();
     }
 
     public async Task Delete(Music music)
     {
         _dbSet.Remove(music);
+
         await _context.SaveChangesAsync();
     }
 

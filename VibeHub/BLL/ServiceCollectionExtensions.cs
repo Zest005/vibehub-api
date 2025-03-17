@@ -1,4 +1,3 @@
-
 using BLL.Abstractions.Helpers;
 using BLL.Abstractions.Services;
 using BLL.Abstractions.Utilities;
@@ -21,18 +20,22 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IRoomService, RoomService>();
         services.AddScoped<IMessageHistoryService, MessageHistoryService>();
-        services.AddScoped<ITokenService, TokenService>();
+        services.AddScoped<ISessionService, SessionService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IGuestService, GuestService>();
+
 
         services.AddSingleton<IFilterUtility, FilterUtility>();
         services.AddSingleton<IMusicFileHelper, MusicFileHelper>();
         services.AddSingleton<IGeneratorUtility, GeneratorUtility>();
-      
+        services.AddSingleton<IPasswordManagerUtility, PasswordManagerUtility>();
+
         services.AddScoped<IValidator<User>, UserValidator>();
         services.AddScoped<IValidator<UserDto>, UserDtoValidator>();
         services.AddScoped<IValidator<RegisterDto>, RegisterDtoValidator>();
         services.AddScoped<IValidator<RoomSettings>, RoomSettingsValidator>();
         services.AddScoped<IValidator<MessageDto>, MessageValidator>();
+
+        services.AddScoped<SessionValidationAttribute>();
     }
 }

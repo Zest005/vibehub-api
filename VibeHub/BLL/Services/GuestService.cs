@@ -33,7 +33,6 @@ public class GuestService : IGuestService
         if (guest == null)
             throw new ArgumentException("Guest not found");
         
-        
         await _guestRepository.Delete(guest);
     }
 }

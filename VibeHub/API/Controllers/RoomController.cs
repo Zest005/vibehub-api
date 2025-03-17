@@ -9,43 +9,45 @@ namespace API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[ServiceFilter(typeof(SessionValidationAttribute))]
 public class RoomController : ControllerBase
 {
     private readonly IRoomService _roomService;
-    private readonly ITokenService _tokenService;
+    private readonly ISessionService _sessionService;
 
-    public RoomController(IRoomService roomService, ITokenService tokenService)
+    public RoomController(IRoomService roomService, ISessionService sessionService)
     {
         _roomService = roomService;
-        _tokenService = tokenService;
+        _sessionService = sessionService;
     }
 
-    // GET api/Room
-    [Authorize]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Room>>> Get()
     {
         var rooms = await _roomService.GetList();
+
         return Ok(rooms);
     }
 
-    // GET api/Room/5
     [HttpGet("{id}")]
     public async Task<ActionResult<Room>> GetById(Guid id)
     {
         var room = await _roomService.GetById(id);
-        if (room == null) return NotFound();
+
+        if (room == null)
+            return NotFound();
+
         return Ok(room);
     }
 
-    // POST api/Room
     [Authorize]
     [HttpPost]
+    [ServiceFilter(typeof(SessionValidationAttribute), Order = 1)]
     public async Task<ActionResult<Room>> Create()
     {
         try
         {
-            var userId = _tokenService.GetIdFromToken();
+            var userId = _sessionService.GetIdFromSession();
             var createdRoom = await _roomService.Create(userId);
 
             return CreatedAtAction("Get", new { id = createdRoom.Id }, createdRoom);
@@ -56,13 +58,12 @@ public class RoomController : ControllerBase
         }
     }
 
-    [Authorize]
     [HttpPost("{code}/join")]
     public async Task<ActionResult> JoinRoomByCode(string code, [FromForm] string? password)
     {
         try
         {
-            var userId = _tokenService.GetIdFromToken();
+            var userId = _sessionService.GetIdFromSession();
             await _roomService.JoinRoom(userId, password, code);
 
             return NoContent();
@@ -73,13 +74,12 @@ public class RoomController : ControllerBase
         }
     }
 
-    [Authorize]
     [HttpPost("{id}/leave")]
     public async Task<ActionResult> LeaveRoom(Guid id)
     {
         try
         {
-            var userId = _tokenService.GetIdFromToken();
+            var userId = _sessionService.GetIdFromSession();
             await _roomService.LeaveRoom(id, userId);
 
             return NoContent();
@@ -96,7 +96,7 @@ public class RoomController : ControllerBase
     {
         try
         {
-            var userId = _tokenService.GetIdFromToken();
+            var userId = _sessionService.GetIdFromSession();
             var room = await _roomService.AddMusics(id, userId, files);
 
             return Ok(room);
@@ -113,7 +113,7 @@ public class RoomController : ControllerBase
     {
         try
         {
-            var userId = _tokenService.GetIdFromToken();
+            var userId = _sessionService.GetIdFromSession();
             var room = await _roomService.RemoveMusics(id, userId, musicList);
 
             return Ok(room);
@@ -130,7 +130,7 @@ public class RoomController : ControllerBase
     {
         try
         {
-            var userId = _tokenService.GetIdFromToken();
+            var userId = _sessionService.GetIdFromSession();
             await _roomService.KickUser(userId, targetUserId, roomId);
             
             return NoContent();
@@ -141,14 +141,13 @@ public class RoomController : ControllerBase
         }
     }
     
-    // // PUT api/Room/5
     [Authorize]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] RoomSettings roomSettings)
     {
         try
         {
-            var userId = _tokenService.GetIdFromToken();
+            var userId = _sessionService.GetIdFromSession();
             await _roomService.Update(id, userId, roomSettings);
 
             return NoContent();
@@ -163,15 +162,15 @@ public class RoomController : ControllerBase
         }
     }
 
-    // DELETE api/Room/5
     [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
         try
         {
-            var userId = _tokenService.GetIdFromToken();
+            var userId = _sessionService.GetIdFromSession();
             await _roomService.Delete(id, userId);
+
             return NoContent();
         }
         catch (KeyNotFoundException)

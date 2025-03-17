@@ -34,12 +34,14 @@ public class GuestRepository : IGuestRepository
     public async Task Update(Guest guest)
     {
         _context.Update(guest);
+
         await _context.SaveChangesAsync();
     }
 
     public async Task Delete(Guest guest)
     {
         _dbSet.Remove(guest);
+
         await _context.SaveChangesAsync();
     }
 

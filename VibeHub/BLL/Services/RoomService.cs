@@ -51,6 +51,7 @@ public class RoomService : IRoomService
         if (user == null)
         {
             _logger.LogError("User does not exists");
+
             throw new ArgumentException("User does not exists");
         }
 
@@ -80,8 +81,11 @@ public class RoomService : IRoomService
         ValidateUpdateMusicPermission(targetUser, targetGuest, targetRoom);
 
         var musicList = await _musicService.AddRange(musicFilesList, roomId);
-
-        var playList = musicList.Select(music => new RoomsMusics { RoomId = roomId, MusicId = music.Id }).ToList();
+        var playList = musicList.Select(music => new RoomsMusics
+        {
+            RoomId = roomId,
+            MusicId = music.Id
+        }).ToList();
 
         targetRoom.Playlist.AddRange(playList);
 
@@ -98,14 +102,14 @@ public class RoomService : IRoomService
 
         ValidateUpdateMusicPermission(targetUser, targetGuest, targetRoom);
 
-        if (musicList.Any(music =>
-                targetRoom.Playlist.Any(targetMusic =>
+        if (musicList.Any(music => targetRoom.Playlist.Any(targetMusic =>
                     targetMusic.MusicId == music.MusicId && targetMusic.RoomId == roomId)))
         {
             targetRoom.Playlist.RemoveAll(targetMusic =>
                 musicList.Any(music => music.MusicId == targetMusic.MusicId));
 
             await _roomRepository.Update(targetRoom);
+
             await _musicService.DeleteRange(musicList.Select(music => new Music
             {
                 Id = music.MusicId
@@ -127,24 +131,28 @@ public class RoomService : IRoomService
         if (targetRoom == null)
         {
             _logger.LogError("Room not found");
+
             throw new Exception("Room not found");
         }
 
         if (targetUser == null)
         {
             _logger.LogError("User not found");
+
             throw new ArgumentException("User not found");
         }
 
         if (targetUser.Id != targetRoom.OwnerId)
         {
             _logger.LogError("You're not owner of the room");
+
             throw new ArgumentException("You're not owner of the room");
         }
 
         if (targetUser.Id == targetUserId)
         {
             _logger.LogError("You can't kick yourself");
+
             throw new ArgumentException("You can't kick yourself");
         }
 
@@ -153,6 +161,7 @@ public class RoomService : IRoomService
         if (userToKick?.Room?.Id != null && userToKick.Room.Id == targetRoom.Id)
         {
             userToKick.Room = null;
+
             await _userRepository.Update(userToKick);
         }
         else
@@ -162,11 +171,13 @@ public class RoomService : IRoomService
             if (guestToKick?.Room?.Id != null && guestToKick.Room.Id == targetRoom.Id)
             {
                 guestToKick.Room = null;
+
                 await _guestRepository.Update(guestToKick);
             }
             else
             {
                 _logger.LogError("User does not exists in the room");
+
                 throw new ArgumentException("User does not exists in the room");
             }
         }
@@ -185,12 +196,14 @@ public class RoomService : IRoomService
         if (targetUser == null && targetGuest == null)
         {
             _logger.LogError("User does not exists");
+
             throw new ArgumentException("User does not exists");
         }
 
         if (targetRoom == null)
         {
             _logger.LogError("Room not found");
+
             throw new Exception("Room not found");
         }
 
@@ -198,12 +211,14 @@ public class RoomService : IRoomService
             (targetGuest?.Room != null && targetGuest.Room?.Id == targetRoom.Id))
         {
             _logger.LogError("You're already in the room");
+
             throw new Exception("You're already in the room");
         }
 
         if (targetRoom.Settings.UsersLimit == targetRoom.UserCount)
         {
             _logger.LogError("Room is full");
+
             throw new Exception("Room is full");
         }
 
@@ -211,6 +226,7 @@ public class RoomService : IRoomService
             (string.IsNullOrEmpty(password) || password != targetRoom.Settings.Password))
         {
             _logger.LogError("Room is private, access is not allowed");
+
             throw new Exception("Room is private, access is not allowed");
         }
 
@@ -219,11 +235,13 @@ public class RoomService : IRoomService
         if (targetUser != null)
         {
             targetUser.Room = targetRoom;
+
             await _userRepository.Update(targetUser);
         }
         else
         {
             targetGuest.Room = targetRoom;
+
             await _guestRepository.Update(targetGuest);
         }
 
@@ -239,12 +257,14 @@ public class RoomService : IRoomService
         if (targetRoom == null)
         {
             _logger.LogError("Room does not exist");
+
             throw new ArgumentException("Room does not exist");
         }
 
         if (targetUser == null && targetGuest == null)
         {
             _logger.LogError("User or Guest does not exist");
+
             throw new ArgumentException("User or Guest does not exist");
         }
 
@@ -252,6 +272,7 @@ public class RoomService : IRoomService
             (targetGuest != null && targetGuest.Room?.Id != targetRoom.Id))
         {
             _logger.LogError("You are not in the room");
+
             throw new Exception("You are not in the room");
         }
 
@@ -260,11 +281,13 @@ public class RoomService : IRoomService
         if (targetUser != null)
         {
             targetUser.Room = null;
+
             await _userRepository.Update(targetUser);
         }
         else
         {
             targetGuest.Room = null;
+
             await _guestRepository.Update(targetGuest);
         }
 
@@ -278,12 +301,14 @@ public class RoomService : IRoomService
         if (existingRoom == null)
         {
             _logger.LogError("Room not found");
+
             throw new KeyNotFoundException("Room not found.");
         }
 
         if (existingRoom.OwnerId != userId)
         {
             _logger.LogError("You are not the owner of this room");
+
             throw new InvalidOperationException("You are not the owner of this room.");
         }
 
@@ -311,12 +336,14 @@ public class RoomService : IRoomService
         if (user == null && guest == null)
         {
             _logger.LogError("User or Guest does not exist");
+
             throw new ArgumentException("User or Guest does not exist");
         }
 
         if (room == null)
         {
             _logger.LogError("Room does not exist");
+
             throw new ArgumentException("Room does not exist");
         }
 
@@ -324,6 +351,7 @@ public class RoomService : IRoomService
             (guest != null && guest.Room?.Id != room.Id))
         {
             _logger.LogError("You are not in the room");
+
             throw new Exception("You are not in the room");
         }
 
@@ -332,6 +360,7 @@ public class RoomService : IRoomService
             (guest != null && room.OwnerId != guest.Id))
         {
             _logger.LogError("You cannot update music");
+
             throw new Exception("You cannot update music");
         }
     }
