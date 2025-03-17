@@ -66,4 +66,9 @@ public class UserRepository : IUserRepository
     {
         return await _context.Users.FirstOrDefaultAsync(u => u.Nickname == nickname);
     }
+
+    public async Task<User?> GetBySessionId(string sessionId)
+    {
+        return await _context.Users.FirstOrDefaultAsync(u => u.SessionId == sessionId);
+    }
 }

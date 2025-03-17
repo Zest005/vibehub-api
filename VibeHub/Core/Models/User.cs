@@ -12,9 +12,9 @@ public class User : BaseEntity
     [MinLength(5)]
     public string Password { get; set; }
     public bool IsAdmin { get; set; }
-    public string? Token { get; set; }
+    public string? SessionId { get; set; }
     public string? Avatar { get; set; }
+    public string Salt { get; set; }
 
     public Room? Room { get; set; }
-    public string Salt { get; set; }
 }

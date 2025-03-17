@@ -26,6 +26,7 @@ internal class FilterUtility : IFilterUtility
         if (entity == null)
         {
             _logger.LogError($"Null entity passed to Filter method. Entity type: {typeof(TEntity).Name}.");
+
             throw new ArgumentNullException(nameof(entity));
         }
 
@@ -53,6 +54,7 @@ internal class FilterUtility : IFilterUtility
             if (minLengthAttr != null && (string.IsNullOrWhiteSpace(value) || value.Length < minLengthAttr.Length))
             {
                 _logger.LogError($"Validation failed for {property.Name}. Problem entity: {nameof(entity)}.");
+
                 throw new Exception($"{property.Name} is required to be filled.");
             }
         }

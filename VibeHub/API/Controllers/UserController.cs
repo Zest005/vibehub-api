@@ -11,29 +11,29 @@ namespace API.Controllers;
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
-    private readonly ITokenService _tokenService;
+    private readonly ISessionService _tokenService;
 
-    public UserController(IUserService userService, ITokenService tokenService)
+    public UserController(IUserService userService, ISessionService tokenService)
     {
         _userService = userService;
         _tokenService = tokenService;
     }
 
-    // GET api/User
     [HttpGet]
     public async Task<ActionResult<IEnumerable<User>>> Get()
     {
         var users = await _userService.GetList();
+
         return Ok(users);
     }
 
-    // GET api/User/5
     [HttpGet("{id}")]
     public async Task<ActionResult<User>> Get(Guid id)
     {
         try
         {
             var user = await _userService.GetById(id);
+
             return Ok(user);
         }
         catch (KeyNotFoundException)
@@ -42,13 +42,13 @@ public class UserController : ControllerBase
         }
     }
 
-    // POST api/User
     [HttpPost]
     public async Task<ActionResult<User>> Post([FromBody] User user)
     {
         try
         {
             await _userService.Add(user);
+
             return CreatedAtAction("Get", new { id = user.Id }, user);
         }
         catch (InvalidOperationException ex)
@@ -57,15 +57,16 @@ public class UserController : ControllerBase
         }
     }
 
-    // PUT api/User/5
     [Authorize]
     [HttpPut]
     public async Task<IActionResult> Put([FromForm] UserDto user)
     {
         try
         {
-            var userId = _tokenService.GetIdFromToken();
+            var userId = _tokenService.GetUserIdFromSession();
+
             await _userService.UpdateDto(userId, user);
+
             return NoContent();
         }
         catch (KeyNotFoundException)
@@ -78,7 +79,6 @@ public class UserController : ControllerBase
         }
     }
 
-    // DELETE api/User/5
     [Authorize]
     [HttpDelete]
     public async Task<IActionResult> Delete(Guid id)
@@ -86,6 +86,7 @@ public class UserController : ControllerBase
         try
         {
             await _userService.Delete(id);
+
             return NoContent();
         }
         catch (KeyNotFoundException)
