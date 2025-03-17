@@ -50,14 +50,14 @@ public class AuthController : ControllerBase
             return Unauthorized();
         }
 
-        var user = await _userService.GetById(Guid.Parse(userId));
-        if (user == null)
+        var result = await _userService.GetById(Guid.Parse(userId));
+        if (result.Entity == null)
         {
             _logger.LogWarning("User not found for logout: {UserId}", userId);
             return Unauthorized();
         }
 
-        await _authService.Logout(user);
+        await _authService.Logout(result.Entity);
         return NoContent();
     }
 

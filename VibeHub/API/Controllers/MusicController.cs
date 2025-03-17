@@ -25,13 +25,13 @@ public class MusicController : ControllerBase
         {
             var result = await _musicService.GetFileById(id);
 
-            return result;
+            return result.HaveErrors == false ? result.Entity : NotFound();
         }
         else
         {
             var result = await _musicService.GetById(id);
 
-            return result != null ? Ok(result) : NotFound(result);
+            return result.HaveErrors == false ? Ok(result.Entity) : NotFound();
         }
     }
 }

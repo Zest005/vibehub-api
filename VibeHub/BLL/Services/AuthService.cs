@@ -1,11 +1,9 @@
 using BLL.Abstractions.Services;
 using BLL.Abstractions.Utilities;
-using BLL.Utilities;
 using Core.DTO;
+using Core.Errors;
 using Core.Models;
 using Microsoft.Extensions.Logging;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace BLL.Services;
 
@@ -16,7 +14,8 @@ public class AuthService : IAuthService
     private readonly ILogger<AuthService> _logger;
     private readonly IPasswordManagerUtility _passwordManagerUtility;
 
-    public AuthService(IUserService userService, ITokenService tokenService, ILogger<AuthService> logger, IPasswordManagerUtility passwordManagerUtility)
+    public AuthService(IUserService userService, ITokenService tokenService, ILogger<AuthService> logger,
+        IPasswordManagerUtility passwordManagerUtility)
     {
         _userService = userService;
         _tokenService = tokenService;
@@ -26,18 +25,19 @@ public class AuthService : IAuthService
 
     public async Task<string> Login(LoginDto loginDto)
     {
-        var user = await _userService.Authenticate(loginDto.Email, loginDto.Password);
-
-        if (user == null || !_passwordManagerUtility.VerifyPasswordHash(loginDto.Password, user.Password, user.Salt))
+        var result = await _userService.Authenticate(loginDto.Email, loginDto.Password);
+        
+        if (result.Entity == null ||
+            !_passwordManagerUtility.VerifyPasswordHash(loginDto.Password, result.Entity.Password, result.Entity.Salt))
         {
             _logger.LogWarning("Invalid login attempt for email: {Email}", loginDto.Email);
             return null;
         }
 
-        var token = _tokenService.GenerateToken(user);
-        user.Token = token;
-        await _userService.Update(user.Id, user);
-        
+        var token = _tokenService.GenerateToken(result.Entity);
+        result.Entity.Token = token;
+        await _userService.Update(result.Entity.Id, result.Entity);
+
         return token;
     }
 
@@ -51,7 +51,7 @@ public class AuthService : IAuthService
     public async Task<User> Register(RegisterDto registerDto)
     {
         var existingUserByEmail = await _userService.GetByEmail(registerDto.Email);
-        
+
         if (existingUserByEmail != null)
         {
             _logger.LogWarning("Email already registered: {Email}", registerDto.Email);
@@ -59,7 +59,7 @@ public class AuthService : IAuthService
         }
 
         var existingUserByNickname = await _userService.GetByNickname(registerDto.Nickname);
-        
+
         if (existingUserByNickname != null)
         {
             _logger.LogWarning("Nickname already registered: {Nickname}", registerDto.Nickname);
@@ -79,7 +79,7 @@ public class AuthService : IAuthService
         };
 
         await _userService.Add(user);
-        
+
         return user;
     }
 }

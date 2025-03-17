@@ -4,10 +4,11 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using BLL.Abstractions.Utilities;
 
 namespace BLL.Utilities
 {
-    public class PasswordManagerUtility
+    public class PasswordManagerUtility : IPasswordManagerUtility
     {
         public (string hashedPassword, string salt) HashPassword(string password)
         {

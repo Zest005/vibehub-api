@@ -25,17 +25,25 @@ public class RoomController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Room>>> Get()
     {
-        var rooms = await _roomService.GetList();
-        return Ok(rooms);
+        try
+        {
+            var result = await _roomService.GetList();
+            
+            return result.HaveErrors == false ? Ok(result.Entity) : NotFound(result.ToString());
+        }
+        catch
+        {
+            return StatusCode(500);
+        }
     }
 
     // GET api/Room/5
     [HttpGet("{id}")]
     public async Task<ActionResult<Room>> GetById(Guid id)
     {
-        var room = await _roomService.GetById(id);
-        if (room == null) return NotFound();
-        return Ok(room);
+        var result = await _roomService.GetById(id);
+        
+        return result.HaveErrors == false ? Ok(result.Entity) : NotFound(result.ToString());
     }
 
     // POST api/Room
@@ -46,13 +54,15 @@ public class RoomController : ControllerBase
         try
         {
             var userId = _tokenService.GetIdFromToken();
-            var createdRoom = await _roomService.Create(userId);
+            var result = await _roomService.Create(userId);
 
-            return CreatedAtAction("Get", new { id = createdRoom.Id }, createdRoom);
+            return result.HaveErrors == false
+                ? CreatedAtAction("Get", new { id = result.Entity.Id }, result.Entity)
+                : BadRequest(result.ToString());
         }
-        catch (InvalidOperationException ex)
+        catch
         {
-            return BadRequest(ex);
+            return StatusCode(500);
         }
     }
 
@@ -63,13 +73,13 @@ public class RoomController : ControllerBase
         try
         {
             var userId = _tokenService.GetIdFromToken();
-            await _roomService.JoinRoom(userId, password, code);
+            var result = await _roomService.JoinRoom(userId, password, code);
 
-            return NoContent();
+            return result.HaveErrors == false ? NoContent() : BadRequest(result.ToString());
         }
-        catch (InvalidOperationException ex)
+        catch 
         {
-            return BadRequest(ex);
+            return StatusCode(500);
         }
     }
 
@@ -80,13 +90,13 @@ public class RoomController : ControllerBase
         try
         {
             var userId = _tokenService.GetIdFromToken();
-            await _roomService.LeaveRoom(id, userId);
+            var result = await _roomService.LeaveRoom(id, userId);
 
-            return NoContent();
+            return result.HaveErrors == false ? NoContent() : BadRequest(result.ToString());
         }
-        catch (InvalidOperationException ex)
+        catch
         {
-            return BadRequest(ex);
+            return StatusCode(500);
         }
     }
 
@@ -97,13 +107,13 @@ public class RoomController : ControllerBase
         try
         {
             var userId = _tokenService.GetIdFromToken();
-            var room = await _roomService.AddMusics(id, userId, files);
+            var result = await _roomService.AddMusics(id, userId, files);
 
-            return Ok(room);
+            return result.HaveErrors == false ? Ok(result.Entity) : NotFound(result.ToString());
         }
-        catch (InvalidOperationException ex)
+        catch 
         {
-            return BadRequest(ex);
+            return StatusCode(500);
         }
     }
 
@@ -114,13 +124,13 @@ public class RoomController : ControllerBase
         try
         {
             var userId = _tokenService.GetIdFromToken();
-            var room = await _roomService.RemoveMusics(id, userId, musicList);
+            var result = await _roomService.RemoveMusics(id, userId, musicList);
 
-            return Ok(room);
+            return result.HaveErrors == false ? Ok(result.Entity) : NotFound(result.ToString());
         }
-        catch (InvalidOperationException ex)
+        catch
         {
-            return BadRequest(ex);
+            return StatusCode(500);
         }
     }
 
@@ -131,13 +141,13 @@ public class RoomController : ControllerBase
         try
         {
             var userId = _tokenService.GetIdFromToken();
-            await _roomService.KickUser(userId, targetUserId, roomId);
+            var result = await _roomService.KickUser(roomId, userId, targetUserId);
             
-            return NoContent();
+            return result.HaveErrors == false ? NoContent() : BadRequest(result.ToString());
         }
-        catch (Exception ex)
+        catch 
         {
-            return BadRequest(ex.Message);
+            return StatusCode(500);
         }
     }
     
@@ -149,17 +159,13 @@ public class RoomController : ControllerBase
         try
         {
             var userId = _tokenService.GetIdFromToken();
-            await _roomService.Update(id, userId, roomSettings);
+            var result = await _roomService.Update(id, userId, roomSettings);
 
-            return NoContent();
+            return result.HaveErrors == false ? NoContent() : BadRequest(result.ToString());
         }
-        catch (KeyNotFoundException)
+        catch 
         {
-            return NotFound();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ex.Message);
+            return StatusCode(500);
         }
     }
 
@@ -171,12 +177,13 @@ public class RoomController : ControllerBase
         try
         {
             var userId = _tokenService.GetIdFromToken();
-            await _roomService.Delete(id, userId);
-            return NoContent();
+            var result = await _roomService.Delete(id, userId);
+            
+            return result.HaveErrors == false ? NoContent() : BadRequest(result.ToString());
         }
-        catch (KeyNotFoundException)
+        catch 
         {
-            return NotFound();
+            return StatusCode(500);
         }
     }
 }

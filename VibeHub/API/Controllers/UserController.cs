@@ -23,8 +23,9 @@ public class UserController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<User>>> Get()
     {
-        var users = await _userService.GetList();
-        return Ok(users);
+        var result = await _userService.GetList();
+
+        return result.HaveErrors == false ? Ok(result.Entity) : NotFound(result.ToString());
     }
 
     // GET api/User/5
@@ -33,12 +34,13 @@ public class UserController : ControllerBase
     {
         try
         {
-            var user = await _userService.GetById(id);
-            return Ok(user);
+            var result = await _userService.GetById(id);
+
+            return result.HaveErrors == false ? Ok(result.Entity) : NotFound(new { Description = result.ToString()});
         }
-        catch (KeyNotFoundException)
+        catch
         {
-            return NotFound();
+            return StatusCode(500);
         }
     }
 
@@ -48,12 +50,15 @@ public class UserController : ControllerBase
     {
         try
         {
-            await _userService.Add(user);
-            return CreatedAtAction("Get", new { id = user.Id }, user);
+            var result = await _userService.Add(user);
+
+            return result.HaveErrors == false
+                ? CreatedAtAction("Get", new { id = user.Id }, result.Entity)
+                : BadRequest(result.ToString());
         }
-        catch (InvalidOperationException ex)
+        catch
         {
-            return BadRequest(ex.Message);
+            return StatusCode(500);
         }
     }
 
@@ -65,16 +70,13 @@ public class UserController : ControllerBase
         try
         {
             var userId = _tokenService.GetIdFromToken();
-            await _userService.UpdateDto(userId, user);
-            return NoContent();
+            var result = await _userService.UpdateDto(userId, user);
+
+            return result.HaveErrors == false ? NoContent() : BadRequest(result.ToString());
         }
-        catch (KeyNotFoundException)
+        catch 
         {
-            return NotFound();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ex.Message);
+            return StatusCode(500);
         }
     }
 
@@ -85,12 +87,13 @@ public class UserController : ControllerBase
     {
         try
         {
-            await _userService.Delete(id);
-            return NoContent();
+            var result = await _userService.Delete(id);
+
+            return result.HaveErrors == false ? NoContent() : BadRequest(result.ToString());
         }
-        catch (KeyNotFoundException)
+        catch 
         {
-            return NotFound();
+            return StatusCode(500);
         }
     }
 }

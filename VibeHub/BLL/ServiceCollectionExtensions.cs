@@ -28,6 +28,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IFilterUtility, FilterUtility>();
         services.AddSingleton<IMusicFileHelper, MusicFileHelper>();
         services.AddSingleton<IGeneratorUtility, GeneratorUtility>();
+        services.AddSingleton<IPasswordManagerUtility, PasswordManagerUtility>();
       
         services.AddScoped<IValidator<User>, UserValidator>();
         services.AddScoped<IValidator<UserDto>, UserDtoValidator>();

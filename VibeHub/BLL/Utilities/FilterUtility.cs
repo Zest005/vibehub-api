@@ -53,7 +53,7 @@ internal class FilterUtility : IFilterUtility
             if (minLengthAttr != null && (string.IsNullOrWhiteSpace(value) || value.Length < minLengthAttr.Length))
             {
                 _logger.LogError($"Validation failed for {property.Name}. Problem entity: {nameof(entity)}.");
-                throw new Exception($"{property.Name} is required to be filled.");
+                throw new ValidationException($"{property.Name} is required to be filled.");
             }
         }
 

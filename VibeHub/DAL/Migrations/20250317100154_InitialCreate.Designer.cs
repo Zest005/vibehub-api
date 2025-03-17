@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DAL.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250313060815_InitialCreate")]
+    [Migration("20250317100154_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -24,6 +24,26 @@ namespace DAL.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Core.Models.Guest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("RoomId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoomId");
+
+                    b.ToTable("Guests");
+                });
 
             modelBuilder.Entity("Core.Models.MessageHistory", b =>
                 {
@@ -63,7 +83,7 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("RoomId")
+                    b.Property<Guid>("RoomId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Title")
@@ -102,10 +122,10 @@ namespace DAL.Migrations
                     b.Property<Guid>("RoomId")
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("Availability")
+                    b.Property<bool>("AllowUsersUpdateMusic")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("MusicAddPermission")
+                    b.Property<bool>("Availability")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Password")
@@ -117,6 +137,21 @@ namespace DAL.Migrations
                     b.HasKey("RoomId");
 
                     b.ToTable("RoomSettings");
+                });
+
+            modelBuilder.Entity("Core.Models.RoomsMusics", b =>
+                {
+                    b.Property<Guid>("MusicId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RoomId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("MusicId", "RoomId");
+
+                    b.HasIndex("RoomId");
+
+                    b.ToTable("RoomsMusics");
                 });
 
             modelBuilder.Entity("Core.Models.User", b =>
@@ -135,10 +170,6 @@ namespace DAL.Migrations
                     b.Property<bool>("IsAdmin")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("Nickname")
                         .IsRequired()
                         .HasColumnType("text");
@@ -150,6 +181,10 @@ namespace DAL.Migrations
                     b.Property<Guid?>("RoomId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Salt")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Token")
                         .HasColumnType("text");
 
@@ -158,6 +193,15 @@ namespace DAL.Migrations
                     b.HasIndex("RoomId");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Core.Models.Guest", b =>
+                {
+                    b.HasOne("Core.Models.Room", "Room")
+                        .WithMany()
+                        .HasForeignKey("RoomId");
+
+                    b.Navigation("Room");
                 });
 
             modelBuilder.Entity("Core.Models.MessageHistory", b =>
@@ -181,9 +225,13 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("Core.Models.Music", b =>
                 {
-                    b.HasOne("Core.Models.Room", null)
-                        .WithMany("Playlist")
-                        .HasForeignKey("RoomId");
+                    b.HasOne("Core.Models.Room", "Room")
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Room");
                 });
 
             modelBuilder.Entity("Core.Models.RoomSettings", b =>
@@ -193,6 +241,25 @@ namespace DAL.Migrations
                         .HasForeignKey("Core.Models.RoomSettings", "RoomId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Room");
+                });
+
+            modelBuilder.Entity("Core.Models.RoomsMusics", b =>
+                {
+                    b.HasOne("Core.Models.Music", "Music")
+                        .WithMany()
+                        .HasForeignKey("MusicId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Core.Models.Room", "Room")
+                        .WithMany("Playlist")
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Music");
 
                     b.Navigation("Room");
                 });

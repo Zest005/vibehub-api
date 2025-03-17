@@ -22,7 +22,7 @@ public class MessageController : ControllerBase
     {
         var result = await _messageHistoryService.GetList(roomId);
 
-        return result != null ? Ok(result) : NotFound(result);
+        return result.HaveErrors == false ? Ok(result.Entity) : NotFound();
     }
 
     [HttpPost]
@@ -30,6 +30,6 @@ public class MessageController : ControllerBase
     {
         var result = await _messageHistoryService.Add(message);
 
-        return result != null ? Ok(result) : NotFound(result);
+        return result.HaveErrors == false ? Ok(result.Entity) : NotFound(result);
     }
 }
