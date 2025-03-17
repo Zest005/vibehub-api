@@ -64,7 +64,7 @@ public class AuthController : ControllerBase
             return Unauthorized();
         }
 
-        var userId = _sessionService.GetIdFromSession();
+        var userId = _sessionService.GetUserIdFromSession();
         var user = await _userService.GetById(userId);
 
         if (user == null)

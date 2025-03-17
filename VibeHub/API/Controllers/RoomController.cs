@@ -47,7 +47,7 @@ public class RoomController : ControllerBase
     {
         try
         {
-            var userId = _sessionService.GetIdFromSession();
+            var userId = _sessionService.GetUserIdFromSession();
             var createdRoom = await _roomService.Create(userId);
 
             return CreatedAtAction("Get", new { id = createdRoom.Id }, createdRoom);
@@ -63,7 +63,7 @@ public class RoomController : ControllerBase
     {
         try
         {
-            var userId = _sessionService.GetIdFromSession();
+            var userId = _sessionService.GetUserIdFromSession();
             await _roomService.JoinRoom(userId, password, code);
 
             return NoContent();
@@ -79,7 +79,7 @@ public class RoomController : ControllerBase
     {
         try
         {
-            var userId = _sessionService.GetIdFromSession();
+            var userId = _sessionService.GetUserIdFromSession();
             await _roomService.LeaveRoom(id, userId);
 
             return NoContent();
@@ -96,7 +96,7 @@ public class RoomController : ControllerBase
     {
         try
         {
-            var userId = _sessionService.GetIdFromSession();
+            var userId = _sessionService.GetUserIdFromSession();
             var room = await _roomService.AddMusics(id, userId, files);
 
             return Ok(room);
@@ -113,7 +113,7 @@ public class RoomController : ControllerBase
     {
         try
         {
-            var userId = _sessionService.GetIdFromSession();
+            var userId = _sessionService.GetUserIdFromSession();
             var room = await _roomService.RemoveMusics(id, userId, musicList);
 
             return Ok(room);
@@ -130,7 +130,7 @@ public class RoomController : ControllerBase
     {
         try
         {
-            var userId = _sessionService.GetIdFromSession();
+            var userId = _sessionService.GetUserIdFromSession();
             await _roomService.KickUser(userId, targetUserId, roomId);
             
             return NoContent();
@@ -147,7 +147,7 @@ public class RoomController : ControllerBase
     {
         try
         {
-            var userId = _sessionService.GetIdFromSession();
+            var userId = _sessionService.GetUserIdFromSession();
             await _roomService.Update(id, userId, roomSettings);
 
             return NoContent();
@@ -168,7 +168,7 @@ public class RoomController : ControllerBase
     {
         try
         {
-            var userId = _sessionService.GetIdFromSession();
+            var userId = _sessionService.GetUserIdFromSession();
             await _roomService.Delete(id, userId);
 
             return NoContent();

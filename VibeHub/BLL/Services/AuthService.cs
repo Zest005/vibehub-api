@@ -34,7 +34,7 @@ public class AuthService : IAuthService
 
         if (!string.IsNullOrEmpty(user.SessionId))
         {
-            await _sessionService.InvalidateSession(user.SessionId);
+            await _sessionService.InvalidateUserSession(user.SessionId);
         }
 
         var sessionId = _sessionService.CreateSession(user);

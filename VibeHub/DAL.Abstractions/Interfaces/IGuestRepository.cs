@@ -9,4 +9,6 @@ public interface IGuestRepository
     Task Update(Guest guest);
     Task Delete(Guest guest);
     Task<bool> Exists(Guid id);
+    Task<IEnumerable<Guest>> GetList();
+    Task<IEnumerable<Guest>> GetInactiveGuests();
 }

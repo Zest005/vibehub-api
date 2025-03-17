@@ -4,10 +4,11 @@ namespace BLL.Abstractions.Services;
 
 public interface ISessionService
 {
-    Guid GetIdFromSession();
+    Guid GetUserIdFromSession();
     string CreateSession(User? user = null, Guest? guest = null);
-    bool ValidateSession(string sessionId);
+    bool ValidateUserSession(string sessionId);
+    Task InvalidateUserSession(string sessionId);
     bool ValidateGuestSession(string sessionId);
-    Task InvalidateSession(string sessionId);
+    Task InvalidateGuestSession(string sessionId);
     Guid GetGuestIdFromSession(string sessionId);
 }

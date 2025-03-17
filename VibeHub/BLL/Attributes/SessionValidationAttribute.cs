@@ -16,7 +16,7 @@ public class SessionValidationAttribute : Attribute, IAuthorizationFilter
     {
         var sessionId = context.HttpContext.Session.GetString("SessionId");
 
-        if (string.IsNullOrEmpty(sessionId) || (!_sessionService.ValidateSession(sessionId) &&
+        if (string.IsNullOrEmpty(sessionId) || (!_sessionService.ValidateUserSession(sessionId) &&
             !_sessionService.ValidateGuestSession(sessionId)))
         {
             context.Result = new UnauthorizedResult();

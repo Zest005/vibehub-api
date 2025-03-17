@@ -1,6 +1,6 @@
 using BLL.Abstractions.Services;
 using Core.Models;
-using DAL.Context;
+using DAL.Abstractions.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -12,17 +12,20 @@ public class SessionService : ISessionService
     private readonly IConfiguration _configuration;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<SessionService> _logger;
-    private readonly AppDbContext _context;
+    private readonly IUserRepository _userRepository;
+    private readonly IGuestRepository _guestRepository;
 
-    public SessionService(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ILogger<SessionService> logger, AppDbContext context)
+    public SessionService(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ILogger<SessionService> logger, IUserRepository userRepository, IGuestRepository guestRepository)
     {
         _configuration = configuration;
         _httpContextAccessor = httpContextAccessor;
         _logger = logger;
-        _context = context;
+        _userRepository = userRepository;
+        _guestRepository = guestRepository;
     }
 
-    public Guid GetIdFromSession()
+    #region User
+    public Guid GetUserIdFromSession()
     {
         var httpContext = _httpContextAccessor.HttpContext;
 
@@ -42,7 +45,7 @@ public class SessionService : ISessionService
             throw new UnauthorizedAccessException("No session ID found");
         }
 
-        var user = _context.Users.FirstOrDefault(u => u.SessionId == sessionId);
+        var user = _userRepository.GetBySessionId(sessionId).Result;
 
         if (user == null)
         {
@@ -53,30 +56,10 @@ public class SessionService : ISessionService
 
         return user.Id;
     }
-    
-    public string CreateSession(User? user = null, Guest? guest = null)
+
+    public bool ValidateUserSession(string sessionId)
     {
-        var sessionId = Guid.NewGuid().ToString();
-
-        if (user != null)
-        {
-            user.SessionId = sessionId;
-            _context.Users.Update(user);
-            _context.SaveChanges();
-        }
-        else if (guest != null)
-        {
-            _httpContextAccessor.HttpContext.Session.SetString(guest.Id.ToString(), sessionId);
-        }
-
-        _httpContextAccessor.HttpContext.Session.SetString("SessionId", sessionId);
-
-        return sessionId;
-    }
-
-    public bool ValidateSession(string sessionId)
-    {
-        var user = _context.Users.FirstOrDefault(u => u.SessionId == sessionId);
+        var user = _userRepository.GetBySessionId(sessionId).Result;
 
         if (user == null)
         {
@@ -88,33 +71,19 @@ public class SessionService : ISessionService
         return true;
     }
 
-    public bool ValidateGuestSession(string sessionId)
+    public async Task InvalidateUserSession(string sessionId)
     {
-        var guestIdString = _httpContextAccessor.HttpContext.Session.Keys.FirstOrDefault(key => _httpContextAccessor.HttpContext.Session.GetString(key) == sessionId);
-
-        if (string.IsNullOrEmpty(guestIdString) || !Guid.TryParse(guestIdString, out var guestId))
-        {
-            _logger.LogError("Guest session validation failed");
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public async Task InvalidateSession(string sessionId)
-    {
-        var user = _context.Users.FirstOrDefault(u => u.SessionId == sessionId);
+        var user = await _userRepository.GetBySessionId(sessionId);
 
         if (user != null)
         {
             user.SessionId = null;
-            _context.Users.Update(user);
-
-            await _context.SaveChangesAsync();
+            await _userRepository.Update(user);
         }
     }
+    #endregion
 
+    #region Guest
     public Guid GetGuestIdFromSession(string sessionId)
     {
         var httpContext = _httpContextAccessor.HttpContext;
@@ -136,5 +105,56 @@ public class SessionService : ISessionService
         }
 
         return guestId;
+    }
+
+    public bool ValidateGuestSession(string sessionId)
+    {
+        var guestIdString = _httpContextAccessor.HttpContext.Session.Keys.FirstOrDefault(key => _httpContextAccessor.HttpContext.Session.GetString(key) == sessionId);
+
+        if (string.IsNullOrEmpty(guestIdString) || !Guid.TryParse(guestIdString, out var guestId))
+        {
+            _logger.LogError("Guest session validation failed");
+
+            return false;
+        }
+
+        return true;
+    }
+
+    public async Task InvalidateGuestSession(string sessionId)
+    {
+        var guestIdString = _httpContextAccessor.HttpContext.Session.Keys.FirstOrDefault(key => _httpContextAccessor.HttpContext.Session.GetString(key) == sessionId);
+
+        if (!string.IsNullOrEmpty(guestIdString) && Guid.TryParse(guestIdString, out var guestId))
+        {
+            var guest = await _guestRepository.GetById(guestId);
+
+            if (guest != null)
+            {
+                await _guestRepository.Delete(guest);
+            }
+        }
+    }
+    #endregion
+
+    public string CreateSession(User? user = null, Guest? guest = null)
+    {
+        var sessionId = Guid.NewGuid().ToString();
+
+        if (user != null)
+        {
+            user.SessionId = sessionId;
+            _userRepository.Update(user).Wait();
+        }
+        else if (guest != null)
+        {
+            _httpContextAccessor.HttpContext.Session.SetString(guest.Id.ToString(), sessionId);
+            guest.LastActive = DateTime.UtcNow;
+            _guestRepository.Update(guest).Wait();
+        }
+
+        _httpContextAccessor.HttpContext.Session.SetString("SessionId", sessionId);
+
+        return sessionId;
     }
 }

@@ -63,7 +63,7 @@ public class UserController : ControllerBase
     {
         try
         {
-            var userId = _tokenService.GetIdFromSession();
+            var userId = _tokenService.GetUserIdFromSession();
 
             await _userService.UpdateDto(userId, user);
 

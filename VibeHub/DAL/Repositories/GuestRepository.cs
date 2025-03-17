@@ -49,4 +49,15 @@ public class GuestRepository : IGuestRepository
     {
         return await _dbSet.AnyAsync(guest => guest.Id == id);
     }
+
+    public async Task<IEnumerable<Guest>> GetList()
+    {
+        return await _dbSet.ToListAsync();
+    }
+
+    public async Task<IEnumerable<Guest>> GetInactiveGuests()
+    {
+        var inactiveThreshold = DateTime.UtcNow.AddMinutes(-1); // 1 minute for dev
+        return await _dbSet.Where(guest => guest.LastActive < inactiveThreshold).ToListAsync();
+    }
 }

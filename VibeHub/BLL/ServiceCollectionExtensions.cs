@@ -37,5 +37,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IValidator<MessageDto>, MessageValidator>();
 
         services.AddScoped<SessionValidationAttribute>();
+
+        services.AddHostedService<GuestCleanupService>();
     }
 }
