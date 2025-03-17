@@ -16,16 +16,15 @@ public class UserService : IUserService
 {
     private readonly IFilterUtility _filterUtility;
     private readonly ILogger<UserService> _logger;
-    private readonly IRoomRepository _roomRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IPasswordManagerUtility _passwordManagerUtility;
 
-    public UserService(IFilterUtility filterUtility, ILogger<UserService> logger, IUserRepository userRepository,
-        IRoomRepository roomRepository)
+    public UserService(IFilterUtility filterUtility, ILogger<UserService> logger, IUserRepository userRepository, IPasswordManagerUtility passwordManagerUtility)
     {
         _filterUtility = filterUtility;
         _logger = logger;
         _userRepository = userRepository;
-        _roomRepository = roomRepository;
+        _passwordManagerUtility = passwordManagerUtility;
     }
 
     public async Task Add(User user)
@@ -119,7 +118,7 @@ public class UserService : IUserService
     public async Task<User> Authenticate(string email, string password)
     {
         var user = await _userRepository.GetByEmail(email);
-        if (user == null || !VerifyPasswordHash(password, user.Password, user.Salt))
+        if (user == null || !_passwordManagerUtility.VerifyPasswordHash(password, user.Password, user.Salt))
             return null;
 
         return user;
@@ -140,15 +139,5 @@ public class UserService : IUserService
     public async Task<User?> GetByNickname(string nickname)
     {
         return await _userRepository.GetByNickname(nickname);
-    }
-
-    private bool VerifyPasswordHash(string password, string storedHash, string storedSalt)
-    {
-        var saltBytes = Convert.FromBase64String(storedSalt);
-        using var hmac = new HMACSHA512(saltBytes);
-        var passwordBytes = Encoding.UTF8.GetBytes(password);
-        var computedHash = Convert.ToBase64String(hmac.ComputeHash(passwordBytes));
-
-        return computedHash == storedHash;
     }
 }

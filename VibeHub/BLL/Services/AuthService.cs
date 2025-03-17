@@ -1,4 +1,6 @@
 using BLL.Abstractions.Services;
+using BLL.Abstractions.Utilities;
+using BLL.Utilities;
 using Core.DTO;
 using Core.Models;
 using Microsoft.Extensions.Logging;
@@ -12,19 +14,21 @@ public class AuthService : IAuthService
     private readonly ITokenService _tokenService;
     private readonly IUserService _userService;
     private readonly ILogger<AuthService> _logger;
+    private readonly IPasswordManagerUtility _passwordManagerUtility;
 
-    public AuthService(IUserService userService, ITokenService tokenService, ILogger<AuthService> logger)
+    public AuthService(IUserService userService, ITokenService tokenService, ILogger<AuthService> logger, IPasswordManagerUtility passwordManagerUtility)
     {
         _userService = userService;
         _tokenService = tokenService;
         _logger = logger;
+        _passwordManagerUtility = passwordManagerUtility;
     }
 
     public async Task<string> Login(LoginDto loginDto)
     {
         var user = await _userService.Authenticate(loginDto.Email, loginDto.Password);
 
-        if (user == null || !VerifyPasswordHash(loginDto.Password, user.Password, user.Salt))
+        if (user == null || !_passwordManagerUtility.VerifyPasswordHash(loginDto.Password, user.Password, user.Salt))
         {
             _logger.LogWarning("Invalid login attempt for email: {Email}", loginDto.Email);
             return null;
@@ -62,7 +66,7 @@ public class AuthService : IAuthService
             throw new InvalidOperationException("Nickname is already registered.");
         }
 
-        var (hashedPassword, salt) = HashPassword(registerDto.Password);
+        var (hashedPassword, salt) = _passwordManagerUtility.HashPassword(registerDto.Password);
 
         var user = new User
         {
@@ -77,25 +81,5 @@ public class AuthService : IAuthService
         await _userService.Add(user);
         
         return user;
-    }
-
-    private (string hashedPassword, string salt) HashPassword(string password)
-    {
-        using var hmac = new HMACSHA512();
-        var salt = Convert.ToBase64String(hmac.Key);
-        var passwordBytes = Encoding.UTF8.GetBytes(password);
-        var hashedPassword = Convert.ToBase64String(hmac.ComputeHash(passwordBytes));
-
-        return (hashedPassword, salt);
-    }
-
-    private bool VerifyPasswordHash(string password, string storedHash, string storedSalt)
-    {
-        var saltBytes = Convert.FromBase64String(storedSalt);
-        using var hmac = new HMACSHA512(saltBytes);
-        var passwordBytes = Encoding.UTF8.GetBytes(password);
-        var computedHash = Convert.ToBase64String(hmac.ComputeHash(passwordBytes));
-
-        return computedHash == storedHash;
     }
 }
