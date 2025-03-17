@@ -1,11 +1,9 @@
 using System.Text;
-using System.Text.Json.Serialization;
 using BLL;
 using DAL;
 using DAL.Context;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -18,19 +16,18 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-
-        var connectionString = builder.Configuration.GetConnectionString("VibeHubDatabase");
-
+      
         builder.Services.AddControllers();
         builder.Services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+                   .EnableSensitiveDataLogging(builder.Environment.IsDevelopment()));
+
         builder.Services.Configure<FormOptions>(options => { options.MultipartBodyLengthLimit = 10 * 1024 * 1024; });
         builder.Services.AddFluentValidationAutoValidation();
         builder.Services.AddOpenApi();
         builder.Services.AddBusinessLogicLayer();
         builder.Services.AddDataAccessLayer();
         builder.Services.AddHttpContextAccessor();
-
         builder.Services.AddControllers()
             .AddNewtonsoftJson(options =>
             {
@@ -93,6 +90,7 @@ public class Program
 
         if (app.Environment.IsDevelopment())
         {
+            app.UseDeveloperExceptionPage();
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
@@ -103,12 +101,11 @@ public class Program
             app.MapOpenApi();
         }
 
+        app.UseHttpsRedirection();
         app.UseAuthentication();
         app.UseAuthorization();
-
         app.MapControllers();
-
-
+      
         app.Run();
     }
 }

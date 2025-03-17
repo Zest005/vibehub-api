@@ -1,5 +1,6 @@
 using Core.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace DAL.Context;
 
@@ -13,15 +14,11 @@ public class AppDbContext : DbContext
     public DbSet<RoomsMusics> RoomsMusics { get; set; }
     public DbSet<Guest> Guests { get; set; }
 
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    private readonly IConfiguration _configuration;
+
+    public AppDbContext(DbContextOptions<AppDbContext> options, IConfiguration configuration) : base(options)
     {
-        Database.OpenConnection();
-    }
-    
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        optionsBuilder.UseNpgsql("Host=localhost:5432;Database=VibeHub;Username=postgres;Password=root");
-        optionsBuilder.EnableSensitiveDataLogging();
+        _configuration = configuration;
     }
 
     protected override void OnModelCreating(ModelBuilder builder)
