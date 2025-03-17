@@ -16,4 +16,5 @@ public class User : BaseEntity
     public string? Avatar { get; set; }
 
     public Room? Room { get; set; }
+    public string Salt { get; set; }
 }

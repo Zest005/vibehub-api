@@ -13,4 +13,6 @@ public interface IUserService
     Task Delete(Guid id);
     Task<User> Authenticate(string email, string password);
     Task Logout(User user);
+    Task<User?> GetByEmail(string email);
+    Task<User?> GetByNickname(string nickname);
 }

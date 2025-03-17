@@ -29,12 +29,14 @@ public class UserRepository : IUserRepository
     public async Task Add(User user)
     {
         _context.Users.Add(user);
+        
         await _context.SaveChangesAsync();
     }
 
     public async Task Update(User user)
     {
         _context.Entry(user).State = EntityState.Modified;
+        
         await _context.SaveChangesAsync();
     }
 
@@ -45,6 +47,7 @@ public class UserRepository : IUserRepository
         if (user != null)
         {
             _context.Users.Remove(user);
+            
             await _context.SaveChangesAsync();
         }
     }
@@ -54,8 +57,13 @@ public class UserRepository : IUserRepository
         return await _context.Users.AnyAsync(e => e.Id == id);
     }
 
-    public async Task<User> GetByEmail(string email)
+    public async Task<User?> GetByEmail(string email)
     {
         return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+    }
+
+    public async Task<User?> GetByNickname(string nickname)
+    {
+        return await _context.Users.FirstOrDefaultAsync(u => u.Nickname == nickname);
     }
 }
