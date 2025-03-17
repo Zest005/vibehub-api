@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace BLL.Utilities
 {
-    public static class PasswordManagerUtility
+    public class PasswordManagerUtility
     {
-        public static (string hashedPassword, string salt) HashPassword(string password)
+        public (string hashedPassword, string salt) HashPassword(string password)
         {
             using var hmac = new HMACSHA512();
             var salt = Convert.ToBase64String(hmac.Key);
@@ -19,7 +19,7 @@ namespace BLL.Utilities
             return (hashedPassword, salt);
         }
 
-        public static bool VerifyPasswordHash(string password , string storedHash, string storedSalt)
+        public bool VerifyPasswordHash(string password , string storedHash, string storedSalt)
         {
             var saltBytes = Convert.FromBase64String(storedSalt);
             using var hmac = new HMACSHA512(saltBytes);
