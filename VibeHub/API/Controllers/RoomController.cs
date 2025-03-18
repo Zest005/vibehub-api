@@ -9,7 +9,6 @@ namespace API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[ServiceFilter(typeof(SessionValidationAttribute))]
 public class RoomController : ControllerBase
 {
     private readonly IRoomService _roomService;
@@ -22,9 +21,9 @@ public class RoomController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Room>>> Get()
+    public async Task<ActionResult<IEnumerable<Room>>> Get([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
-        var rooms = await _roomService.GetList();
+        var rooms = await _roomService.GetList(pageNumber, pageSize);
 
         return Ok(rooms);
     }
@@ -42,7 +41,7 @@ public class RoomController : ControllerBase
 
     [Authorize]
     [HttpPost]
-    [ServiceFilter(typeof(SessionValidationAttribute), Order = 1)]
+    [ServiceFilter(typeof(SessionValidationAttribute))]
     public async Task<ActionResult<Room>> Create()
     {
         try
@@ -59,6 +58,7 @@ public class RoomController : ControllerBase
     }
 
     [HttpPost("{code}/join")]
+    [ServiceFilter(typeof(SessionValidationAttribute))]
     public async Task<ActionResult> JoinRoomByCode(string code, [FromForm] string? password)
     {
         try
@@ -75,6 +75,7 @@ public class RoomController : ControllerBase
     }
 
     [HttpPost("{id}/leave")]
+    [ServiceFilter(typeof(SessionValidationAttribute))]
     public async Task<ActionResult> LeaveRoom(Guid id)
     {
         try
@@ -92,6 +93,7 @@ public class RoomController : ControllerBase
 
     [Authorize]
     [HttpPut("{id}/addSongs")]
+    [ServiceFilter(typeof(SessionValidationAttribute))]
     public async Task<IActionResult> AddSongs(Guid id, [FromForm] [MinLength(1)] List<IFormFile> files)
     {
         try
@@ -109,6 +111,7 @@ public class RoomController : ControllerBase
 
     [Authorize]
     [HttpPut("{id}/deleteSongs")]
+    [ServiceFilter(typeof(SessionValidationAttribute))]
     public async Task<IActionResult> DeleteSongs(Guid id, [FromBody] [MinLength(1)] List<RoomsMusicsDto> musicList)
     {
         try
@@ -126,6 +129,7 @@ public class RoomController : ControllerBase
 
     [Authorize]
     [HttpPut("{roomId}/kick/{targetUserId}")]
+    [ServiceFilter(typeof(SessionValidationAttribute))]
     public async Task<IActionResult> Kick(Guid roomId, Guid targetUserId)
     {
         try
@@ -143,6 +147,7 @@ public class RoomController : ControllerBase
     
     [Authorize]
     [HttpPut("{id}")]
+    [ServiceFilter(typeof(SessionValidationAttribute))]
     public async Task<IActionResult> Update(Guid id, [FromBody] RoomSettings roomSettings)
     {
         try
@@ -164,6 +169,7 @@ public class RoomController : ControllerBase
 
     [Authorize]
     [HttpDelete("{id}")]
+    [ServiceFilter(typeof(SessionValidationAttribute))]
     public async Task<IActionResult> Delete(Guid id)
     {
         try

@@ -56,6 +56,7 @@ public class AuthController : ControllerBase
 
     [Authorize]
     [HttpPost("logout")]
+    [ServiceFilter(typeof(SessionValidationAttribute))]
     public async Task<IActionResult> Logout()
     {
         var sessionId = HttpContext.Session.GetString("SessionId");

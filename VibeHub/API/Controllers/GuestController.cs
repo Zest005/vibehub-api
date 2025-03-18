@@ -46,6 +46,7 @@ public class GuestController : ControllerBase
 
     [Authorize]
     [HttpDelete]
+    [ServiceFilter(typeof(SessionValidationAttribute))]
     public async Task<IActionResult> Delete()
     {
         var sessionId = HttpContext.Session.GetString("SessionId");

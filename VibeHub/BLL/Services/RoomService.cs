@@ -34,9 +34,9 @@ public class RoomService : IRoomService
         _guestRepository = guestRepository;
     }
 
-    public async Task<IEnumerable<Room>> GetList()
+    public async Task<IEnumerable<Room>> GetList(int pageNumber, int pageSize)
     {
-        return await _roomRepository.GetList();
+        return await _roomRepository.GetList(pageNumber, pageSize);
     }
 
     public async Task<Room> GetById(Guid id)

@@ -19,14 +19,6 @@ public class UserController : ControllerBase
         _tokenService = tokenService;
     }
 
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<User>>> Get()
-    {
-        var users = await _userService.GetList();
-
-        return Ok(users);
-    }
-
     [HttpGet("{id}")]
     public async Task<ActionResult<User>> Get(Guid id)
     {
@@ -42,23 +34,9 @@ public class UserController : ControllerBase
         }
     }
 
-    [HttpPost]
-    public async Task<ActionResult<User>> Post([FromBody] User user)
-    {
-        try
-        {
-            await _userService.Add(user);
-
-            return CreatedAtAction("Get", new { id = user.Id }, user);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-    }
-
     [Authorize]
     [HttpPut]
+    [ServiceFilter(typeof(SessionValidationAttribute))]
     public async Task<IActionResult> Put([FromForm] UserDto user)
     {
         try
@@ -81,6 +59,7 @@ public class UserController : ControllerBase
 
     [Authorize]
     [HttpDelete]
+    [ServiceFilter(typeof(SessionValidationAttribute))]
     public async Task<IActionResult> Delete(Guid id)
     {
         try

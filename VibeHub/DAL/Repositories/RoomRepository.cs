@@ -14,9 +14,12 @@ public class RoomRepository : IRoomRepository
         _context = context;
     }
 
-    public async Task<IEnumerable<Room>> GetList()
+    public async Task<IEnumerable<Room>> GetList(int pageNumber, int pageSize)
     {
-        return await _context.Rooms.ToListAsync();
+        return await _context.Rooms
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
     }
 
     public async Task<Room?> GetById(Guid id)
