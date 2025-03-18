@@ -400,5 +400,3 @@ FodyWeavers.xsd
 *.sln.iml
 /VibeHub/API/Uploads
 /VibeHub/API/appsettings.json
-/VibeHub/DAL/Migrations
-/VibeHub/DAL/Migrations
