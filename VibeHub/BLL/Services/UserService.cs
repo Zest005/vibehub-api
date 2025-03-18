@@ -2,13 +2,14 @@ using System.ComponentModel.DataAnnotations;
 using BLL.Abstractions.Services;
 using BLL.Abstractions.Utilities;
 using Core.DTO;
+using Core.Errors;
 using Core.Models;
 using DAL.Abstractions.Interfaces;
 using Microsoft.Extensions.Logging;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Processing;
-using Core.Errors;
+
 
 namespace BLL.Services;
 
@@ -19,7 +20,8 @@ public class UserService : IUserService
     private readonly IUserRepository _userRepository;
     private readonly IPasswordManagerUtility _passwordManagerUtility;
 
-    public UserService(IFilterUtility filterUtility, ILogger<UserService> logger, IUserRepository userRepository, IPasswordManagerUtility passwordManagerUtility)
+    public UserService(IFilterUtility filterUtility, ILogger<UserService> logger, IUserRepository userRepository,
+        IPasswordManagerUtility passwordManagerUtility)
     {
         _filterUtility = filterUtility;
         _logger = logger;
@@ -35,7 +37,7 @@ public class UserService : IUserService
                 return ErrorCatalog.UserAlreadyExists;
 
             user = await _filterUtility.Filter(user);
-        
+
             await _userRepository.Add(user);
 
             return new EntityResult<User>
@@ -62,7 +64,7 @@ public class UserService : IUserService
                 return ErrorCatalog.UserNotFound;
             }
 
-            return new EntityResult<User>(); 
+            return new EntityResult<User>();
         }
         catch (Exception exception)
         {
@@ -75,7 +77,7 @@ public class UserService : IUserService
     {
         try
         {
-            EntityResult<User> entityResult = new ()
+            EntityResult<User> entityResult = new()
             {
                 Entity = await _userRepository.GetById(id)
             };
@@ -85,7 +87,7 @@ public class UserService : IUserService
                 _logger.LogError("User not found");
                 return ErrorCatalog.UserNotFound;
             }
-        
+
             return entityResult;
         }
         catch (Exception exception)
@@ -99,11 +101,11 @@ public class UserService : IUserService
     {
         try
         {
-            EntityResult<IEnumerable<User>> entityResult = new ()
+            EntityResult<IEnumerable<User>> entityResult = new()
             {
                 Entity = await _userRepository.GetList()
             };
-        
+
             return entityResult;
         }
         catch (Exception exception)
@@ -141,9 +143,9 @@ public class UserService : IUserService
         }
         catch (ValidationException exception)
         {
-            return new(exception.Message, true);
+            return new EntityResult<User>(exception.Message, true);
         }
-        
+
         catch (Exception exception)
         {
             _logger.LogError(exception, "An error occurred while updating user.");
@@ -188,7 +190,7 @@ public class UserService : IUserService
         }
         catch (ValidationException exception)
         {
-            return new(exception.Message, true);
+            return new EntityResult<User>(exception.Message, true);
         }
         catch (Exception exception)
         {
@@ -199,12 +201,13 @@ public class UserService : IUserService
 
     public async Task<EntityResult<User>> Authenticate(string email, string password)
     {
-        EntityResult<User> result = new ()
+        EntityResult<User> result = new()
         {
             Entity = await _userRepository.GetByEmail(email)
         };
-        
-        if (result.Entity == null || !_passwordManagerUtility.VerifyPasswordHash(password, result.Entity.Password, result.Entity.Salt))
+
+        if (result.Entity == null ||
+            !_passwordManagerUtility.VerifyPasswordHash(password, result.Entity.Password, result.Entity.Salt))
             return ErrorCatalog.Unauthorized;
 
         return result;
@@ -215,9 +218,9 @@ public class UserService : IUserService
         try
         {
             user.SessionId = null;
-        
+
             await _userRepository.Update(user);
-            
+
             return new EntityResult<User>();
         }
         catch (Exception exception)
@@ -235,7 +238,7 @@ public class UserService : IUserService
             {
                 Entity = await _userRepository.GetByEmail(email)
             };
-        
+
             return result;
         }
         catch (Exception exception)

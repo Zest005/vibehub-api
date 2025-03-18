@@ -38,6 +38,6 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<SessionValidationAttribute>();
 
-        // services.AddHostedService<GuestCleanupService>();
+        services.AddHostedService<GuestCleanupService>();
     }
 }

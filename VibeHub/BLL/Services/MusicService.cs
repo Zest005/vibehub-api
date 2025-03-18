@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
+
 namespace BLL.Services;
 
 public class MusicService : IMusicService
@@ -35,13 +36,12 @@ public class MusicService : IMusicService
                 Entity = await _repository.GetById(id)
             };
 
-            if (result.Entity != null) 
+            if (result.Entity != null)
                 return result;
-            
-            _logger.LogError($"Music with id {id} not found");
-           
-            return ErrorCatalog.MusicNotFound;
 
+            _logger.LogError($"Music with id {id} not found");
+
+            return ErrorCatalog.MusicNotFound;
         }
         catch
         {
@@ -63,7 +63,7 @@ public class MusicService : IMusicService
             }
 
             var targetFileName = targetMusic.Id + ".*";
-        
+
             return new EntityResult<FileStreamResult>
             {
                 Entity = await _musicFileHelper.TryGetFile(targetFileName)
@@ -121,7 +121,7 @@ public class MusicService : IMusicService
             throw;
         }
     }
-    
+
     public async Task DeleteRange(List<Music> musicList)
     {
         try

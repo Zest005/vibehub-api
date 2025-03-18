@@ -8,6 +8,7 @@ using DAL.Abstractions.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
+
 namespace BLL.Services;
 
 public class RoomService : IRoomService
@@ -123,7 +124,7 @@ public class RoomService : IRoomService
 
         var result = ValidateUpdateMusicPermission(targetUser, targetGuest, targetRoom);
 
-        if (!string.IsNullOrEmpty(result.Description))
+        if (result.HaveErrors)
             return result;
 
         var musicList = await _musicService.AddRange(musicFilesList, roomId);
@@ -180,7 +181,7 @@ public class RoomService : IRoomService
             {
                 Entity = await _roomRepository.GetById(roomId)
             };
-            
+
             var targetUser = await _userRepository.GetById(userId);
 
             if (result.Entity == null)
@@ -233,7 +234,7 @@ public class RoomService : IRoomService
             result.Entity.UserCount--;
 
             await _roomRepository.Update(result.Entity);
-        
+
             return result;
         }
         catch (Exception exception)
@@ -251,7 +252,7 @@ public class RoomService : IRoomService
             {
                 Entity = await _roomRepository.GetByCode(code)
             };
-        
+
             var targetUser = await _userRepository.GetById(userId);
             var targetGuest = targetUser == null ? await _guestRepository.GetById(userId) : null;
 
@@ -315,7 +316,7 @@ public class RoomService : IRoomService
     {
         try
         {
-            var result = new EntityResult<Room>()
+            var result = new EntityResult<Room>
             {
                 Entity = await _roomRepository.GetById(roomId)
             };
@@ -370,7 +371,6 @@ public class RoomService : IRoomService
     {
         try
         {
-
             var result = new EntityResult<Room>()
             {
                 Entity = await _roomRepository.GetById(id)
@@ -410,17 +410,17 @@ public class RoomService : IRoomService
             {
                 Entity = await _roomRepository.GetById(id)
             };
-        
+
             var user = await _userRepository.GetById(userId);
 
             if (result.Entity == null || user == null)
                 return ErrorCatalog.UserForRoomNotFound;
-            
+
             if (result.Entity.OwnerId != userId)
                 return ErrorCatalog.NotUserOwner;
 
             await _roomRepository.Delete(id);
-            
+
             return result;
         }
         catch (Exception exception)

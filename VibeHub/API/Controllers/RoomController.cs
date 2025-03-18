@@ -134,7 +134,6 @@ public class RoomController : ControllerBase
             if (visitorResult.HaveErrors)
                 return BadRequest(visitorResult.ToString());
             
-            
             var roomResult = await _roomService.RemoveMusics(id, visitorResult.Entity, musicList);
     
             return roomResult.HaveErrors == false ? Ok(roomResult.Entity) : NotFound(roomResult.ToString());

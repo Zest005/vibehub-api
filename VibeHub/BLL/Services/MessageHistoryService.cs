@@ -6,6 +6,7 @@ using Core.Models;
 using DAL.Abstractions.Interfaces;
 using Microsoft.Extensions.Logging;
 
+
 namespace BLL.Services;
 
 public class MessageHistoryService : IMessageHistoryService
@@ -14,11 +15,12 @@ public class MessageHistoryService : IMessageHistoryService
     private readonly IMessageHistoryRepository _messageHistoryRepository;
     private readonly IRoomService _roomService;
     private readonly IUserService _userService;
-    private ILogger<MessageHistoryService> _logger;
+    private readonly ILogger<MessageHistoryService> _logger;
 
 
     public MessageHistoryService(IUserService userService, IRoomService roomService,
-        IMessageHistoryRepository messageHistoryRepository, IFilterUtility filterUtility, ILogger<MessageHistoryService> logger)
+        IMessageHistoryRepository messageHistoryRepository, IFilterUtility filterUtility,
+        ILogger<MessageHistoryService> logger)
     {
         _userService = userService;
         _roomService = roomService;
@@ -73,7 +75,6 @@ public class MessageHistoryService : IMessageHistoryService
             };
 
             return result;
-
         }
         catch (Exception ex)
         {

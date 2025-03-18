@@ -154,6 +154,7 @@ public class SessionService : ISessionService
     public EntityResult<Guid> GetIdFromVisitor()
     {
         var userResult = GetUserIdFromSession();
+        
         if (!userResult.HaveErrors)
         {
             return userResult;   
@@ -178,7 +179,6 @@ public class SessionService : ISessionService
             guest.LastActive = DateTime.UtcNow;
             _guestRepository.Update(guest).Wait();
         }
-
 
         return sessionId;
     }

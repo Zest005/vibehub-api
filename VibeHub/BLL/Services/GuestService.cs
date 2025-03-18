@@ -3,6 +3,7 @@ using BLL.Abstractions.Utilities;
 using Core.Models;
 using DAL.Abstractions.Interfaces;
 
+
 namespace BLL.Services;
 
 public class GuestService : IGuestService
@@ -32,7 +33,7 @@ public class GuestService : IGuestService
 
         if (guest == null)
             throw new ArgumentException("Guest not found");
-        
+
         await _guestRepository.Delete(guest);
     }
 }

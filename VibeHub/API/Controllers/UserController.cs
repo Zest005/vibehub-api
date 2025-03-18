@@ -42,6 +42,7 @@ public class UserController : ControllerBase
         try
         {
             var userResult = _tokenService.GetUserIdFromSession();
+            
             if (userResult.HaveErrors)
                 return Unauthorized();
 
