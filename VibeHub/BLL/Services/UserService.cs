@@ -134,7 +134,7 @@ public class UserService : IUserService
             result.Entity.Nickname = user.Nickname;
             result.Entity.Password = user.Password;
             result.Entity.Room = user.Room;
-            result.Entity.Token = user.Token;
+            result.Entity.SessionId = user.SessionId;
             result.Entity.Salt = user.Salt;
 
             return result;
@@ -214,7 +214,7 @@ public class UserService : IUserService
     {
         try
         {
-            user.Token = null;
+            user.SessionId = null;
         
             await _userRepository.Update(user);
             

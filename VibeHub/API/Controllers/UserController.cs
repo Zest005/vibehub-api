@@ -11,89 +11,87 @@ namespace API.Controllers;
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
-    private readonly ITokenService _tokenService;
+    private readonly ISessionService _tokenService;
 
-    public UserController(IUserService userService, ITokenService tokenService)
+    public UserController(IUserService userService, ISessionService tokenService)
     {
         _userService = userService;
         _tokenService = tokenService;
     }
 
-    // GET api/User
     [HttpGet]
     public async Task<ActionResult<IEnumerable<User>>> Get()
     {
-        var result = await _userService.GetList();
+        var users = await _userService.GetList();
 
-        return result.HaveErrors == false ? Ok(result.Entity) : NotFound(result.ToString());
+        return Ok(users);
     }
 
-    // GET api/User/5
     [HttpGet("{id}")]
     public async Task<ActionResult<User>> Get(Guid id)
     {
         try
         {
-            var result = await _userService.GetById(id);
+            var user = await _userService.GetById(id);
 
-            return result.HaveErrors == false ? Ok(result.Entity) : NotFound(new { Description = result.ToString()});
+            return Ok(user);
         }
-        catch
+        catch (KeyNotFoundException)
         {
-            return StatusCode(500);
+            return NotFound();
         }
     }
 
-    // POST api/User
     [HttpPost]
     public async Task<ActionResult<User>> Post([FromBody] User user)
     {
         try
         {
-            var result = await _userService.Add(user);
+            await _userService.Add(user);
 
-            return result.HaveErrors == false
-                ? CreatedAtAction("Get", new { id = user.Id }, result.Entity)
-                : BadRequest(result.ToString());
+            return CreatedAtAction("Get", new { id = user.Id }, user);
         }
-        catch
+        catch (InvalidOperationException ex)
         {
-            return StatusCode(500);
+            return BadRequest(ex.Message);
         }
     }
 
-    // PUT api/User/5
     [Authorize]
     [HttpPut]
     public async Task<IActionResult> Put([FromForm] UserDto user)
     {
         try
         {
-            var userId = _tokenService.GetIdFromToken();
-            var result = await _userService.UpdateDto(userId, user);
+            var userId = _tokenService.GetUserIdFromSession();
 
-            return result.HaveErrors == false ? NoContent() : BadRequest(result.ToString());
+            await _userService.UpdateDto(userId, user);
+
+            return NoContent();
         }
-        catch 
+        catch (KeyNotFoundException)
         {
-            return StatusCode(500);
+            return NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
         }
     }
 
-    // DELETE api/User/5
     [Authorize]
     [HttpDelete]
     public async Task<IActionResult> Delete(Guid id)
     {
         try
         {
-            var result = await _userService.Delete(id);
+            await _userService.Delete(id);
 
-            return result.HaveErrors == false ? NoContent() : BadRequest(result.ToString());
+            return NoContent();
         }
-        catch 
+        catch (KeyNotFoundException)
         {
-            return StatusCode(500);
+            return NotFound();
         }
     }
 }

@@ -1,10 +1,10 @@
-﻿using System;
+﻿using BLL.Abstractions.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using BLL.Abstractions.Utilities;
 
 namespace BLL.Utilities
 {

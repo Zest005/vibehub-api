@@ -12,4 +12,5 @@ public interface IUserRepository
     Task<bool> Exists(Guid id);
     Task<User?> GetByEmail(string email);
     Task<User?> GetByNickname(string nickname);
+    Task<User?> GetBySessionId(string sessionId);
 }

@@ -1,5 +1,7 @@
 using BLL.Abstractions.Services;
 using Core.DTO;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -13,63 +15,76 @@ public class AuthController : ControllerBase
     private readonly IAuthService _authService;
     private readonly IUserService _userService;
     private readonly ILogger<AuthController> _logger;
+    private readonly ISessionService _sessionService;
 
-    public AuthController(IAuthService authService, IUserService userService, ILogger<AuthController> logger)
+    public AuthController(IAuthService authService, IUserService userService, ILogger<AuthController> logger, ISessionService sessionService)
     {
         _authService = authService;
         _userService = userService;
         _logger = logger;
+        _sessionService = sessionService;
     }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
+        var sessionId = await _authService.Login(loginDto);
 
-        var token = await _authService.Login(loginDto);
-        if (token == null)
+        if (sessionId == null)
         {
             _logger.LogWarning("Unauthorized login attempt for email: {Email}", loginDto.Email);
             return Unauthorized();
         }
 
-        return Ok(new { Token = token });
+        HttpContext.Session.SetString("SessionId", sessionId);
+
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, sessionId)
+        };
+
+        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var authProperties = new AuthenticationProperties
+        {
+            IsPersistent = true
+        };
+
+        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
+
+        return Ok(new { SessionId = sessionId });
     }
 
     [Authorize]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
+        var sessionId = HttpContext.Session.GetString("SessionId");
+        if (string.IsNullOrEmpty(sessionId))
         {
-            _logger.LogWarning("Unauthorized logout attempt");
             return Unauthorized();
         }
 
-        var result = await _userService.GetById(Guid.Parse(userId));
+        var userId = _sessionService.GetUserIdFromSession();
+        var result = await _userService.GetById(userId);
+
         if (result.Entity == null)
         {
-            _logger.LogWarning("User not found for logout: {UserId}", userId);
             return Unauthorized();
         }
 
         await _authService.Logout(result.Entity);
+
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        HttpContext.Session.Remove("SessionId");
+
         return NoContent();
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
-
         var user = await _authService.Register(registerDto);
+
         return CreatedAtAction(nameof(Register), new { id = user.Id }, user);
     }
 }

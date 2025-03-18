@@ -9,15 +9,17 @@ namespace API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[ServiceFilter(typeof(SessionValidationAttribute))]
 public class RoomController : ControllerBase
 {
     private readonly IRoomService _roomService;
-    private readonly ITokenService _tokenService;
-
-    public RoomController(IRoomService roomService, ITokenService tokenService)
+    private ISessionService _sessionService;
+ 
+    
+    public RoomController(IRoomService roomService, ISessionService sessionService)
     {
         _roomService = roomService;
-        _tokenService = tokenService;
+        _sessionService = sessionService;
     }
 
     // GET api/Room
@@ -49,11 +51,12 @@ public class RoomController : ControllerBase
     // POST api/Room
     [Authorize]
     [HttpPost]
+    [ServiceFilter(typeof(SessionValidationAttribute), Order = 1)]
     public async Task<ActionResult<Room>> Create()
     {
         try
         {
-            var userId = _tokenService.GetIdFromToken();
+            var userId = _sessionService.GetUserIdFromSession();
             var result = await _roomService.Create(userId);
 
             return result.HaveErrors == false
@@ -65,16 +68,16 @@ public class RoomController : ControllerBase
             return StatusCode(500);
         }
     }
-
+    
     [Authorize]
     [HttpPost("{code}/join")]
     public async Task<ActionResult> JoinRoomByCode(string code, [FromForm] string? password)
     {
         try
         {
-            var userId = _tokenService.GetIdFromToken();
+            var userId = _sessionService.GetUserIdFromSession();
             var result = await _roomService.JoinRoom(userId, password, code);
-
+    
             return result.HaveErrors == false ? NoContent() : BadRequest(result.ToString());
         }
         catch 
@@ -82,16 +85,16 @@ public class RoomController : ControllerBase
             return StatusCode(500);
         }
     }
-
+    
     [Authorize]
     [HttpPost("{id}/leave")]
     public async Task<ActionResult> LeaveRoom(Guid id)
     {
         try
         {
-            var userId = _tokenService.GetIdFromToken();
+            var userId = _sessionService.GetIdFromToken();
             var result = await _roomService.LeaveRoom(id, userId);
-
+    
             return result.HaveErrors == false ? NoContent() : BadRequest(result.ToString());
         }
         catch
@@ -99,7 +102,7 @@ public class RoomController : ControllerBase
             return StatusCode(500);
         }
     }
-
+    
     [Authorize]
     [HttpPut("{id}/addSongs")]
     public async Task<IActionResult> AddSongs(Guid id, [FromForm] [MinLength(1)] List<IFormFile> files)
@@ -108,7 +111,7 @@ public class RoomController : ControllerBase
         {
             var userId = _tokenService.GetIdFromToken();
             var result = await _roomService.AddMusics(id, userId, files);
-
+    
             return result.HaveErrors == false ? Ok(result.Entity) : NotFound(result.ToString());
         }
         catch 
@@ -116,7 +119,7 @@ public class RoomController : ControllerBase
             return StatusCode(500);
         }
     }
-
+    
     [Authorize]
     [HttpPut("{id}/deleteSongs")]
     public async Task<IActionResult> DeleteSongs(Guid id, [FromBody] [MinLength(1)] List<RoomsMusicsDto> musicList)
@@ -125,7 +128,7 @@ public class RoomController : ControllerBase
         {
             var userId = _tokenService.GetIdFromToken();
             var result = await _roomService.RemoveMusics(id, userId, musicList);
-
+    
             return result.HaveErrors == false ? Ok(result.Entity) : NotFound(result.ToString());
         }
         catch
@@ -133,7 +136,7 @@ public class RoomController : ControllerBase
             return StatusCode(500);
         }
     }
-
+    
     [Authorize]
     [HttpPut("{roomId}/kick/{targetUserId}")]
     public async Task<IActionResult> Kick(Guid roomId, Guid targetUserId)
@@ -160,7 +163,7 @@ public class RoomController : ControllerBase
         {
             var userId = _tokenService.GetIdFromToken();
             var result = await _roomService.Update(id, userId, roomSettings);
-
+    
             return result.HaveErrors == false ? NoContent() : BadRequest(result.ToString());
         }
         catch 
@@ -168,7 +171,7 @@ public class RoomController : ControllerBase
             return StatusCode(500);
         }
     }
-
+    
     // DELETE api/Room/5
     [Authorize]
     [HttpDelete("{id}")]
