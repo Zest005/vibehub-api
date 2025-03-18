@@ -1,5 +1,3 @@
-#region
-
 using System.Security.Claims;
 using BLL.Abstractions.Services;
 using Core.DTO;
@@ -8,7 +6,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-#endregion
 
 namespace API.Controllers;
 

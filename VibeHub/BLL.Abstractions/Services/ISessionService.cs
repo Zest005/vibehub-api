@@ -11,7 +11,5 @@ public interface ISessionService
     Task InvalidateUserSession(string sessionId);
     EntityResult<Guid> GetGuestIdFromSession();
     bool ValidateGuestSession(string sessionId);
-    Task InvalidateGuestSession(string sessionId);
-    // EntityResult<Guid> GetIdFromVisitor();
     EntityResult<Guid> GetIdFromVisitor();
 }
