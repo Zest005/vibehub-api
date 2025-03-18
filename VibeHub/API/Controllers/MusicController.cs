@@ -19,6 +19,7 @@ public class MusicController : ControllerBase
 
     [Authorize]
     [HttpGet("{id}")]
+    [ServiceFilter(typeof(SessionValidationAttribute))]
     public async Task<IActionResult> GetById(Guid id, [FromQuery] bool download)
     {
         if (download)

@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
 using Core.Base;
 
 namespace Core.Models;
@@ -15,7 +14,7 @@ public class User : BaseEntity
     public bool IsAdmin { get; set; }
     public string? SessionId { get; set; }
     public string? Avatar { get; set; }
-    public Room? Room { get; set; }
+    public string Salt { get; set; }
 
-    public string Salt { get; set; } = string.Empty;
+    public Room? Room { get; set; }
 }

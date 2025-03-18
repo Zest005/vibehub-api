@@ -1,11 +1,13 @@
 using BLL.Abstractions.Services;
 using Core.DTO;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[ServiceFilter(typeof(SessionValidationAttribute))]
 public class MessageController : ControllerBase
 {
     private readonly ILogger<MessageController> _logger;
@@ -17,6 +19,7 @@ public class MessageController : ControllerBase
         _logger = logger;
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetList([FromQuery] Guid roomId)
     {
@@ -25,6 +28,7 @@ public class MessageController : ControllerBase
         return result.HaveErrors == false ? Ok(result.Entity) : NotFound();
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Send([FromBody] MessageDto message)
     {

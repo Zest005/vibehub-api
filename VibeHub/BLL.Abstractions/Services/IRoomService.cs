@@ -7,7 +7,7 @@ namespace BLL.Abstractions.Services;
 
 public interface IRoomService
 {
-    Task<EntityResult<IEnumerable<Room>>> GetList();
+    Task<EntityResult<IEnumerable<Room>>> GetList(int pageNumber, int pageSize);
     Task<EntityResult<Room>> GetById(Guid id);
     Task<EntityResult<Room>> Create(Guid userId);
     Task<EntityResult<Room>> Update(Guid roomId, Guid userId, RoomSettings room);

@@ -56,6 +56,7 @@ public class AuthController : ControllerBase
 
     [Authorize]
     [HttpPost("logout")]
+    [ServiceFilter(typeof(SessionValidationAttribute))]
     public async Task<IActionResult> Logout()
     {
         var sessionId = HttpContext.Session.GetString("SessionId");
@@ -64,15 +65,21 @@ public class AuthController : ControllerBase
             return Unauthorized();
         }
 
-        var userId = _sessionService.GetUserIdFromSession();
-        var result = await _userService.GetById(userId);
+        var userResult = _sessionService.GetUserIdFromSession();
+        
+        if (userResult.HaveErrors)
+            return BadRequest(userResult.ToString());
+        
+        var result = await _userService.GetById(userResult.Entity);
 
-        if (result.Entity == null)
-        {
-            return Unauthorized();
-        }
+        if (result.HaveErrors)
+            return BadRequest(result.ToString());
+        
+        var logoutResult = await _authService.Logout(result.Entity);
 
-        await _authService.Logout(result.Entity);
+        if (logoutResult.HaveErrors)
+            return StatusCode(500, logoutResult.ToString());
+
 
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         HttpContext.Session.Remove("SessionId");
@@ -83,8 +90,10 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
     {
-        var user = await _authService.Register(registerDto);
+        var result = await _authService.Register(registerDto);
 
-        return CreatedAtAction(nameof(Register), new { id = user.Id }, user);
+        return result.HaveErrors == false
+            ? Ok(result.Entity)
+            : BadRequest(result.ToString());
     }
 }

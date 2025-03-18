@@ -4,7 +4,7 @@ namespace DAL.Abstractions.Interfaces
 {
     public interface IRoomRepository
     {
-        Task<IEnumerable<Room>> GetList();
+        Task<IEnumerable<Room>> GetList(int pageNumber, int pageSize);
         Task<Room?> GetById(Guid id);
         Task<Room?> GetByCode(string code);
         Task Add(Room room);

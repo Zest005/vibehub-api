@@ -1,4 +1,5 @@
 using BLL.Abstractions.Services;
+using Core.Errors;
 using Core.Models;
 using DAL.Abstractions.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -25,7 +26,7 @@ public class SessionService : ISessionService
     }
 
     #region User
-    public Guid GetUserIdFromSession()
+    public EntityResult<Guid> GetUserIdFromSession()
     {
         var httpContext = _httpContextAccessor.HttpContext;
 
@@ -33,7 +34,7 @@ public class SessionService : ISessionService
         {
             _logger.LogError("HttpContext is null");
 
-            throw new InvalidOperationException("HttpContext is null");
+            return new EntityResult<Guid>("Unknown error, write to support.", true);
         }
 
         var sessionId = httpContext.Session.GetString("SessionId");
@@ -42,7 +43,7 @@ public class SessionService : ISessionService
         {
             _logger.LogWarning("No session ID found in session storage");
 
-            throw new UnauthorizedAccessException("No session ID found");
+            return ErrorCatalog.SessionIdNotFound;
         }
 
         var user = _userRepository.GetBySessionId(sessionId).Result;
@@ -51,10 +52,13 @@ public class SessionService : ISessionService
         {
             _logger.LogWarning("Invalid session ID");
 
-            throw new UnauthorizedAccessException("Invalid session ID");
+            return ErrorCatalog.SessionIdInvalid;
         }
 
-        return user.Id;
+        return new EntityResult<Guid>
+        {
+            Entity = user.Id
+        };
     }
 
     public bool ValidateUserSession(string sessionId)
@@ -84,7 +88,7 @@ public class SessionService : ISessionService
     #endregion
 
     #region Guest
-    public Guid GetGuestIdFromSession(string sessionId)
+    public EntityResult<Guid> GetGuestIdFromSession()
     {
         var httpContext = _httpContextAccessor.HttpContext;
 
@@ -95,16 +99,26 @@ public class SessionService : ISessionService
             throw new InvalidOperationException("HttpContext is null");
         }
 
+        var sessionId = httpContext.Session.GetString("SessionId");
+        
         var guestIdString = httpContext.Session.Keys.FirstOrDefault(key => httpContext.Session.GetString(key) == sessionId);
 
-        if (string.IsNullOrEmpty(guestIdString) || !Guid.TryParse(guestIdString, out var guestId))
+        if (!string.IsNullOrEmpty(guestIdString))
         {
-            _logger.LogWarning("Invalid session ID");
+            var isGuid = Guid.TryParse(guestIdString, out var guestId);
 
-            throw new UnauthorizedAccessException("Invalid session ID");
+            if (isGuid && _guestRepository.Exists(guestId).Result)
+            {
+                return new EntityResult<Guid>
+                {
+                    Entity = guestId
+                };
+            }
         }
 
-        return guestId;
+        _logger.LogWarning("Invalid session ID");
+
+        return ErrorCatalog.SessionIdNotFound;
     }
 
     public bool ValidateGuestSession(string sessionId)
@@ -137,6 +151,17 @@ public class SessionService : ISessionService
     }
     #endregion
 
+    public EntityResult<Guid> GetIdFromVisitor()
+    {
+        var userResult = GetUserIdFromSession();
+        if (!userResult.HaveErrors)
+        {
+            return userResult;   
+        }
+    
+        return GetGuestIdFromSession();
+    }
+    
     public string CreateSession(User? user = null, Guest? guest = null)
     {
         var sessionId = Guid.NewGuid().ToString();
@@ -145,6 +170,7 @@ public class SessionService : ISessionService
         {
             user.SessionId = sessionId;
             _userRepository.Update(user).Wait();
+            _httpContextAccessor.HttpContext.Session.SetString("SessionId", sessionId);
         }
         else if (guest != null)
         {
@@ -153,7 +179,6 @@ public class SessionService : ISessionService
             _guestRepository.Update(guest).Wait();
         }
 
-        _httpContextAccessor.HttpContext.Session.SetString("SessionId", sessionId);
 
         return sessionId;
     }

@@ -35,13 +35,13 @@ public class RoomService : IRoomService
         _guestRepository = guestRepository;
     }
 
-    public async Task<EntityResult<IEnumerable<Room>>> GetList()
+    public async Task<EntityResult<IEnumerable<Room>>> GetList(int pageNumber, int pageSize)
     {
         try
         {
             EntityResult<IEnumerable<Room>> entityResult = new()
             {
-                Entity = await _roomRepository.GetList()
+                Entity = await _roomRepository.GetList(pageNumber, pageSize)
             };
 
             return entityResult;

@@ -1,6 +1,6 @@
 namespace Core.Errors;
 
-public class EntityResult<T> where T : class
+public class EntityResult<T>
 {
      public T? Entity;
      public string? Description { get; }
