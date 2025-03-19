@@ -5,13 +5,8 @@ public class EntityResult<T>
      public T? Entity;
      public string? Description { get; }
      public bool HaveErrors { get; } = false;
-
-     public EntityResult()
-     {
-         
-     }
-
-     public EntityResult(string? description, bool haveErrors = false)
+ 
+     public EntityResult(string? description = null, bool haveErrors = false)
      {
          Description = description;
          HaveErrors = haveErrors;
