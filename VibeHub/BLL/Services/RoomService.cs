@@ -2,10 +2,12 @@ using BLL.Abstractions.Helpers;
 using BLL.Abstractions.Services;
 using BLL.Abstractions.Utilities;
 using Core.DTO;
+using Core.Errors;
 using Core.Models;
 using DAL.Abstractions.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+
 
 namespace BLL.Services;
 
@@ -34,82 +36,129 @@ public class RoomService : IRoomService
         _guestRepository = guestRepository;
     }
 
-    public async Task<IEnumerable<Room>> GetList(int pageNumber, int pageSize)
+    public async Task<EntityResult<IEnumerable<Room>>> GetList(int pageNumber, int pageSize)
     {
-        return await _roomRepository.GetList(pageNumber, pageSize);
-    }
-
-    public async Task<Room> GetById(Guid id)
-    {
-        return await _roomRepository.GetById(id);
-    }
-
-    public async Task<Room> Create(Guid userId)
-    {
-        var user = await _userRepository.GetById(userId);
-
-        if (user == null)
+        try
         {
-            _logger.LogError("User does not exists");
+            EntityResult<IEnumerable<Room>> entityResult = new()
+            {
+                Entity = await _roomRepository.GetList(pageNumber, pageSize)
+            };
 
-            throw new ArgumentException("User does not exists");
+            return entityResult;
         }
-
-        var room = new Room
+        catch (Exception exception)
         {
-            Code = _generator.GenerateString(5),
-            UserCount = 1,
-            OwnerId = userId,
-            Settings = new RoomSettings()
-        };
-
-        await _roomRepository.Add(room);
-
-        user.Room = room;
-
-        await _userRepository.Update(user);
-
-        return room;
+            _logger.LogError(exception, "An error occurred while logging out user.");
+            return new EntityResult<IEnumerable<Room>>("Unknown error", true);
+        }
     }
 
-    public async Task<Room> AddMusics(Guid roomId, Guid userId, List<IFormFile> musicFilesList)
+    public async Task<EntityResult<Room>> GetById(Guid id)
+    {
+        try
+        {
+            EntityResult<Room> entityResult = new()
+            {
+                Entity = await _roomRepository.GetById(id)
+            };
+
+            if (entityResult.Entity == null)
+            {
+                _logger.LogError("User not found");
+                return ErrorCatalog.RoomNotFound;
+            }
+
+            return entityResult;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "An error occurred while logging out user.");
+            return new EntityResult<Room>("Unknown error", true);
+        }
+    }
+
+    public async Task<EntityResult<Room>> Create(Guid userId)
+    {
+        try
+        {
+            var user = await _userRepository.GetById(userId);
+
+            if (user == null)
+            {
+                _logger.LogError("User does not exists");
+                return ErrorCatalog.UserForRoomNotFound;
+            }
+
+            var entityResult = new EntityResult<Room>
+            {
+                Entity = new Room
+                {
+                    Code = _generator.GenerateString(5),
+                    UserCount = 1,
+                    OwnerId = userId,
+                    Settings = new RoomSettings()
+                }
+            };
+
+            await _roomRepository.Add(entityResult.Entity);
+
+            user.Room = entityResult.Entity;
+
+            await _userRepository.Update(user);
+
+            return entityResult;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "An error occurred while creating room.");
+            return new EntityResult<Room>("Unknown error", true);
+        }
+    }
+
+    public async Task<EntityResult<Room>> AddMusics(Guid roomId, Guid userId, List<IFormFile> musicFilesList)
     {
         var targetRoom = await _roomRepository.GetById(roomId);
         var targetUser = await _userRepository.GetById(userId);
         var targetGuest = targetUser == null ? await _guestRepository.GetById(userId) : null;
 
-        ValidateUpdateMusicPermission(targetUser, targetGuest, targetRoom);
+        var result = ValidateUpdateMusicPermission(targetUser, targetGuest, targetRoom);
+
+        if (result.HaveErrors)
+            return result;
 
         var musicList = await _musicService.AddRange(musicFilesList, roomId);
-        var playList = musicList.Select(music => new RoomsMusics
-        {
-            RoomId = roomId,
-            MusicId = music.Id
-        }).ToList();
+
+        var playList = musicList.Select(music => new RoomsMusics { RoomId = roomId, MusicId = music.Id }).ToList();
 
         targetRoom.Playlist.AddRange(playList);
 
         await _roomRepository.Update(targetRoom);
+        result.Entity = targetRoom;
 
-        return targetRoom;
+        return result;
     }
 
-    public async Task<Room> RemoveMusics(Guid roomId, Guid userId, List<RoomsMusicsDto> musicList)
+    public async Task<EntityResult<Room>> RemoveMusics(Guid roomId, Guid userId, List<RoomsMusicsDto> musicList)
     {
         var targetRoom = await _roomRepository.GetById(roomId);
         var targetUser = await _userRepository.GetById(userId);
         var targetGuest = targetUser == null ? await _guestRepository.GetById(userId) : null;
 
-        ValidateUpdateMusicPermission(targetUser, targetGuest, targetRoom);
+        var result = ValidateUpdateMusicPermission(targetUser, targetGuest, targetRoom);
 
-        if (musicList.Any(music => targetRoom.Playlist.Any(targetMusic =>
+
+        if (!string.IsNullOrEmpty(result.Description))
+            return result;
+
+        if (musicList.Any(music =>
+                result.Entity.Playlist.Any(targetMusic =>
                     targetMusic.MusicId == music.MusicId && targetMusic.RoomId == roomId)))
         {
-            targetRoom.Playlist.RemoveAll(targetMusic =>
+            result.Entity.Playlist.RemoveAll(targetMusic =>
                 musicList.Any(music => music.MusicId == targetMusic.MusicId));
 
-            await _roomRepository.Update(targetRoom);
-
+            await _roomRepository.Update(result.Entity);
             await _musicService.DeleteRange(musicList.Select(music => new Music
             {
                 Id = music.MusicId
@@ -117,242 +166,289 @@ public class RoomService : IRoomService
 
             await _musicFileHelper.TryDeleteFiles(musicList.Select(musicId => musicId.MusicId + ".*").ToList());
 
-            return targetRoom;
+
+            return result;
         }
 
-        return targetRoom;
+        return result;
     }
 
-    public async Task KickUser(Guid userId, Guid targetUserId, Guid roomId)
+    public async Task<EntityResult<Room>> KickUser(Guid roomId, Guid userId, Guid targetUserId)
     {
-        var targetRoom = await _roomRepository.GetById(roomId);
-        var targetUser = await _userRepository.GetById(userId);
-
-        if (targetRoom == null)
+        try
         {
-            _logger.LogError("Room not found");
-
-            throw new Exception("Room not found");
-        }
-
-        if (targetUser == null)
-        {
-            _logger.LogError("User not found");
-
-            throw new ArgumentException("User not found");
-        }
-
-        if (targetUser.Id != targetRoom.OwnerId)
-        {
-            _logger.LogError("You're not owner of the room");
-
-            throw new ArgumentException("You're not owner of the room");
-        }
-
-        if (targetUser.Id == targetUserId)
-        {
-            _logger.LogError("You can't kick yourself");
-
-            throw new ArgumentException("You can't kick yourself");
-        }
-
-        var userToKick = await _userRepository.GetById(targetUserId);
-
-        if (userToKick?.Room?.Id != null && userToKick.Room.Id == targetRoom.Id)
-        {
-            userToKick.Room = null;
-
-            await _userRepository.Update(userToKick);
-        }
-        else
-        {
-            var guestToKick = await _guestRepository.GetById(targetUserId);
-
-            if (guestToKick?.Room?.Id != null && guestToKick.Room.Id == targetRoom.Id)
+            var result = new EntityResult<Room>()
             {
-                guestToKick.Room = null;
+                Entity = await _roomRepository.GetById(roomId)
+            };
 
-                await _guestRepository.Update(guestToKick);
+            var targetUser = await _userRepository.GetById(userId);
+
+            if (result.Entity == null)
+            {
+                _logger.LogError("Room not found");
+                return ErrorCatalog.RoomNotFound;
+            }
+
+            if (targetUser == null)
+            {
+                _logger.LogError("User not found");
+                return ErrorCatalog.UserForRoomNotFound;
+            }
+
+            if (targetUser.Id != result.Entity.OwnerId)
+            {
+                _logger.LogError("You're not owner of the room");
+                return ErrorCatalog.NotUserOwner;
+            }
+
+            if (targetUser.Id == targetUserId)
+            {
+                _logger.LogError("You can't kick yourself");
+                return ErrorCatalog.SelfKick;
+            }
+
+            var userToKick = await _userRepository.GetById(targetUserId);
+
+            if (userToKick?.Room?.Id != null && userToKick.Room.Id == result.Entity.Id)
+            {
+                userToKick.Room = null;
+                await _userRepository.Update(userToKick);
             }
             else
             {
-                _logger.LogError("User does not exists in the room");
+                var guestToKick = await _guestRepository.GetById(targetUserId);
 
-                throw new ArgumentException("User does not exists in the room");
+                if (guestToKick?.Room?.Id != null && guestToKick.Room.Id == result.Entity.Id)
+                {
+                    guestToKick.Room = null;
+                    await _guestRepository.Update(guestToKick);
+                }
+                else
+                {
+                    _logger.LogError("User does not exists in the room");
+                    throw new ArgumentException("User does not exists in the room");
+                }
             }
+
+            result.Entity.UserCount--;
+
+            await _roomRepository.Update(result.Entity);
+
+            return result;
         }
-
-        targetRoom.UserCount--;
-
-        await _roomRepository.Update(targetRoom);
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "An error occurred while kicking user.");
+            return new EntityResult<Room>("Unknown error", true);
+        }
     }
 
-    public async Task JoinRoom(Guid userId, string? password, string code)
+    public async Task<EntityResult<Room>> JoinRoom(Guid userId, string? password, string code)
     {
-        var targetRoom = await _roomRepository.GetByCode(code);
-        var targetUser = await _userRepository.GetById(userId);
-        var targetGuest = targetUser == null ? await _guestRepository.GetById(userId) : null;
-
-        if (targetUser == null && targetGuest == null)
+        try
         {
-            _logger.LogError("User does not exists");
+            var result = new EntityResult<Room>()
+            {
+                Entity = await _roomRepository.GetByCode(code)
+            };
 
-            throw new ArgumentException("User does not exists");
+            var targetUser = await _userRepository.GetById(userId);
+            var targetGuest = targetUser == null ? await _guestRepository.GetById(userId) : null;
+
+            if (targetUser == null && targetGuest == null)
+            {
+                _logger.LogError("User does not exists");
+                return ErrorCatalog.UserForRoomNotFound;
+            }
+
+            if (result.Entity == null)
+            {
+                _logger.LogError("Room not found");
+                return ErrorCatalog.RoomNotFound;
+            }
+
+            if ((targetUser?.Room != null && targetUser.Room?.Id == result.Entity.Id) ||
+                (targetGuest?.Room != null && targetGuest.Room?.Id == result.Entity.Id))
+            {
+                _logger.LogError("You're already in the room");
+                return ErrorCatalog.AlreadyInRoom;
+            }
+
+            if (result.Entity.Settings.UsersLimit == result.Entity.UserCount)
+            {
+                _logger.LogError("Room is full");
+                return ErrorCatalog.RoomIsFull;
+            }
+
+            if (!result.Entity.Settings.Availability &&
+                (string.IsNullOrEmpty(password) || password != result.Entity.Settings.Password))
+            {
+                _logger.LogError("Room is private, access is not allowed");
+                return ErrorCatalog.RoomIsPrivate;
+            }
+
+            result.Entity.UserCount++;
+
+            if (targetUser != null)
+            {
+                targetUser.Room = result.Entity;
+                await _userRepository.Update(targetUser);
+            }
+            else
+            {
+                targetGuest.Room = result.Entity;
+                await _guestRepository.Update(targetGuest);
+            }
+
+            await _roomRepository.Update(result.Entity);
+
+            return result;
         }
-
-        if (targetRoom == null)
+        catch (Exception exception)
         {
-            _logger.LogError("Room not found");
-
-            throw new Exception("Room not found");
+            _logger.LogError(exception, "An error occurred while joining room.");
+            return new EntityResult<Room>("Unknown error", true);
         }
-
-        if ((targetUser?.Room != null && targetUser.Room?.Id == targetRoom.Id) ||
-            (targetGuest?.Room != null && targetGuest.Room?.Id == targetRoom.Id))
-        {
-            _logger.LogError("You're already in the room");
-
-            throw new Exception("You're already in the room");
-        }
-
-        if (targetRoom.Settings.UsersLimit == targetRoom.UserCount)
-        {
-            _logger.LogError("Room is full");
-
-            throw new Exception("Room is full");
-        }
-
-        if (!targetRoom.Settings.Availability &&
-            (string.IsNullOrEmpty(password) || password != targetRoom.Settings.Password))
-        {
-            _logger.LogError("Room is private, access is not allowed");
-
-            throw new Exception("Room is private, access is not allowed");
-        }
-
-        targetRoom.UserCount++;
-
-        if (targetUser != null)
-        {
-            targetUser.Room = targetRoom;
-
-            await _userRepository.Update(targetUser);
-        }
-        else
-        {
-            targetGuest.Room = targetRoom;
-
-            await _guestRepository.Update(targetGuest);
-        }
-
-        await _roomRepository.Update(targetRoom);
     }
 
-    public async Task LeaveRoom(Guid roomId, Guid userId)
+    public async Task<EntityResult<Room>> LeaveRoom(Guid roomId, Guid userId)
     {
-        var targetRoom = await _roomRepository.GetById(roomId);
-        var targetUser = await _userRepository.GetById(userId);
-        var targetGuest = targetUser == null ? await _guestRepository.GetById(userId) : null;
-
-        if (targetRoom == null)
+        try
         {
-            _logger.LogError("Room does not exist");
+            var result = new EntityResult<Room>
+            {
+                Entity = await _roomRepository.GetById(roomId)
+            };
 
-            throw new ArgumentException("Room does not exist");
+            var targetUser = await _userRepository.GetById(userId);
+            var targetGuest = targetUser == null ? await _guestRepository.GetById(userId) : null;
+
+            if (result.Entity == null)
+            {
+                _logger.LogError("Room does not exist");
+                return ErrorCatalog.RoomNotFound;
+            }
+
+            if (targetUser == null && targetGuest == null)
+            {
+                _logger.LogError("User or Guest does not exist");
+                return ErrorCatalog.UserForRoomNotFound;
+            }
+
+            if ((targetUser != null && targetUser.Room?.Id != result.Entity.Id) ||
+                (targetGuest != null && targetGuest.Room?.Id != result.Entity.Id))
+            {
+                _logger.LogError("You are not in the room");
+                return ErrorCatalog.NotInRoom;
+            }
+
+            result.Entity.UserCount--;
+
+            if (targetUser != null)
+            {
+                targetUser.Room = null;
+                await _userRepository.Update(targetUser);
+            }
+            else
+            {
+                targetGuest.Room = null;
+                await _guestRepository.Update(targetGuest);
+            }
+
+            await _roomRepository.Update(result.Entity);
+
+            return result;
         }
-
-        if (targetUser == null && targetGuest == null)
+        catch (Exception exception)
         {
-            _logger.LogError("User or Guest does not exist");
-
-            throw new ArgumentException("User or Guest does not exist");
+            _logger.LogError(exception, "An error occurred while leaving room.");
+            return new EntityResult<Room>("Unknown error", true);
         }
-
-        if ((targetUser != null && targetUser.Room?.Id != targetRoom.Id) ||
-            (targetGuest != null && targetGuest.Room?.Id != targetRoom.Id))
-        {
-            _logger.LogError("You are not in the room");
-
-            throw new Exception("You are not in the room");
-        }
-
-        targetRoom.UserCount--;
-
-        if (targetUser != null)
-        {
-            targetUser.Room = null;
-
-            await _userRepository.Update(targetUser);
-        }
-        else
-        {
-            targetGuest.Room = null;
-
-            await _guestRepository.Update(targetGuest);
-        }
-
-        await _roomRepository.Update(targetRoom);
     }
 
-    public async Task Update(Guid id, Guid userId, RoomSettings roomSettings)
+    public async Task<EntityResult<Room>> Update(Guid id, Guid userId, RoomSettings roomSettings)
     {
-        var existingRoom = await _roomRepository.GetById(id);
-
-        if (existingRoom == null)
+        try
         {
-            _logger.LogError("Room not found");
+            var result = new EntityResult<Room>()
+            {
+                Entity = await _roomRepository.GetById(id)
+            };
 
-            throw new KeyNotFoundException("Room not found.");
+            if (result.Entity == null)
+            {
+                _logger.LogError("Room not found");
+                return ErrorCatalog.RoomNotFound;
+            }
+
+            if (result.Entity.OwnerId != userId)
+            {
+                _logger.LogError("You are not the owner of this room");
+                return ErrorCatalog.NotUserOwner;
+            }
+
+            roomSettings = await _filterUtility.Filter(roomSettings);
+            result.Entity.Settings = roomSettings;
+
+            await _roomRepository.Update(result.Entity);
+
+            return result;
         }
-
-        if (existingRoom.OwnerId != userId)
+        catch (Exception exception)
         {
-            _logger.LogError("You are not the owner of this room");
-
-            throw new InvalidOperationException("You are not the owner of this room.");
+            _logger.LogError(exception, "An error occurred while updating room.");
+            return new EntityResult<Room>("Unknown error", true);
         }
-
-        roomSettings = await _filterUtility.Filter(roomSettings);
-        existingRoom.Settings = roomSettings;
-
-        await _roomRepository.Update(existingRoom);
     }
 
-    public async Task Delete(Guid id, Guid userId)
+    public async Task<EntityResult<Room>> Delete(Guid id, Guid userId)
     {
-        var room = await _roomRepository.GetById(id);
-        var user = await _userRepository.GetById(userId);
+        try
+        {
+            var result = new EntityResult<Room>()
+            {
+                Entity = await _roomRepository.GetById(id)
+            };
 
-        if (room == null || user == null)
-            throw new KeyNotFoundException("Room not found.");
-        if (room.OwnerId != userId)
-            throw new InvalidOperationException("You are not the owner of this room.");
+            var user = await _userRepository.GetById(userId);
 
-        await _roomRepository.Delete(id);
+            if (result.Entity == null || user == null)
+                return ErrorCatalog.UserForRoomNotFound;
+
+            if (result.Entity.OwnerId != userId)
+                return ErrorCatalog.NotUserOwner;
+
+            await _roomRepository.Delete(id);
+
+            return result;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "An error occurred while deleting room.");
+            return new EntityResult<Room>("Unknown error", true);
+        }
     }
 
-    private void ValidateUpdateMusicPermission(User? user, Guest? guest, Room? room)
+    private EntityResult<Room> ValidateUpdateMusicPermission(User? user, Guest? guest, Room? room)
     {
         if (user == null && guest == null)
         {
             _logger.LogError("User or Guest does not exist");
-
-            throw new ArgumentException("User or Guest does not exist");
+            return ErrorCatalog.UserForRoomNotFound;
         }
 
         if (room == null)
         {
             _logger.LogError("Room does not exist");
-
-            throw new ArgumentException("Room does not exist");
+            return ErrorCatalog.RoomNotFound;
         }
 
         if ((user != null && user.Room?.Id != room.Id) ||
             (guest != null && guest.Room?.Id != room.Id))
         {
             _logger.LogError("You are not in the room");
-
-            throw new Exception("You are not in the room");
+            return ErrorCatalog.UserNotInRoom;
         }
 
         if (!room.Settings.AllowUsersUpdateMusic ||
@@ -360,8 +456,12 @@ public class RoomService : IRoomService
             (guest != null && room.OwnerId != guest.Id))
         {
             _logger.LogError("You cannot update music");
-
-            throw new Exception("You cannot update music");
+            return ErrorCatalog.MusicUpdateDenied;
         }
+
+        return new EntityResult<Room>
+        {
+            Entity = room
+        };
     }
 }

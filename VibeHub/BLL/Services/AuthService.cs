@@ -1,6 +1,7 @@
 using BLL.Abstractions.Services;
 using BLL.Abstractions.Utilities;
 using Core.DTO;
+using Core.Errors;
 using Core.Models;
 using Microsoft.Extensions.Logging;
 
@@ -23,50 +24,50 @@ public class AuthService : IAuthService
 
     public async Task<string> Login(LoginDto loginDto)
     {
-        var user = await _userService.Authenticate(loginDto.Email, loginDto.Password);
+        var result = await _userService.Authenticate(loginDto.Email, loginDto.Password);
 
-        if (user == null || !_passwordManagerUtility.VerifyPasswordHash(loginDto.Password, user.Password, user.Salt))
+        if (result.Entity == null || !_passwordManagerUtility.VerifyPasswordHash(loginDto.Password, result.Entity.Password, result.Entity.Salt))
         {
             _logger.LogWarning("Invalid login attempt for email: {Email}", loginDto.Email);
 
             return null;
         }
 
-        if (!string.IsNullOrEmpty(user.SessionId))
+        if (!string.IsNullOrEmpty(result.Entity.SessionId))
         {
-            await _sessionService.InvalidateUserSession(user.SessionId);
+            await _sessionService.InvalidateUserSession(result.Entity.SessionId);
         }
 
-        var sessionId = _sessionService.CreateSession(user);
+        var sessionId = _sessionService.CreateSession(result.Entity);
 
         return sessionId;
     }
 
-    public async Task Logout(User user)
-    {
+    public async Task<EntityResult<User>> Logout(User user)
+    { 
         user.SessionId = null;
 
-        await _userService.Update(user.Id, user);
+        return await _userService.Update(user.Id, user);
     }
 
-    public async Task<User> Register(RegisterDto registerDto)
+    public async Task<EntityResult<User>> Register(RegisterDto registerDto)
     {
-        var existingUserByEmail = await _userService.GetByEmail(registerDto.Email);
+        var result = await _userService.GetByEmail(registerDto.Email);
 
-        if (existingUserByEmail != null)
+        if (result.Entity != null)
         {
             _logger.LogWarning("Email already registered: {Email}", registerDto.Email);
 
-            throw new InvalidOperationException("Email is already registered.");
+            return ErrorCatalog.EmailAlreadyExists;
         }
 
-        var existingUserByNickname = await _userService.GetByNickname(registerDto.Nickname);
+        result = await _userService.GetByNickname(registerDto.Nickname);
 
-        if (existingUserByNickname != null)
+        if (result.Entity != null)
         {
             _logger.LogWarning("Nickname already registered: {Nickname}", registerDto.Nickname);
 
-            throw new InvalidOperationException("Nickname is already registered.");
+            return ErrorCatalog.NickNameAlreadyExists;
         }
 
         var (hashedPassword, salt) = _passwordManagerUtility.HashPassword(registerDto.Password);
@@ -80,8 +81,8 @@ public class AuthService : IAuthService
             Salt = salt
         };
 
-        await _userService.Add(user);
+        result = await _userService.Add(user);
 
-        return user;
+        return result;
     }
 }

@@ -41,9 +41,12 @@ public class UserController : ControllerBase
     {
         try
         {
-            var userId = _tokenService.GetUserIdFromSession();
+            var userResult = _tokenService.GetUserIdFromSession();
+            
+            if (userResult.HaveErrors)
+                return Unauthorized();
 
-            await _userService.UpdateDto(userId, user);
+            await _userService.UpdateDto(userResult.Entity, user);
 
             return NoContent();
         }

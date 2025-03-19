@@ -1,8 +1,11 @@
 using BLL.Abstractions.Services;
 using BLL.Abstractions.Utilities;
 using Core.DTO;
+using Core.Errors;
 using Core.Models;
 using DAL.Abstractions.Interfaces;
+using Microsoft.Extensions.Logging;
+
 
 namespace BLL.Services;
 
@@ -12,49 +15,71 @@ public class MessageHistoryService : IMessageHistoryService
     private readonly IMessageHistoryRepository _messageHistoryRepository;
     private readonly IRoomService _roomService;
     private readonly IUserService _userService;
+    private readonly ILogger<MessageHistoryService> _logger;
+
 
     public MessageHistoryService(IUserService userService, IRoomService roomService,
-        IMessageHistoryRepository messageHistoryRepository, IFilterUtility filterUtility)
+        IMessageHistoryRepository messageHistoryRepository, IFilterUtility filterUtility,
+        ILogger<MessageHistoryService> logger)
     {
         _userService = userService;
         _roomService = roomService;
         _messageHistoryRepository = messageHistoryRepository;
         _filterUtility = filterUtility;
+        _logger = logger;
     }
 
-    public async Task<bool> Add(MessageDto message)
+    public async Task<EntityResult<MessageHistory>> Add(MessageDto message)
     {
-        var user = await _userService.GetById(message.UserId);
-        var room = await _roomService.GetById(message.RoomId);
-
-        if (user == null || room == null)
-            throw new ArgumentNullException("The user and room can't be null");
-
-        message = await _filterUtility.Filter(message);
-
-        if (string.IsNullOrWhiteSpace(message.Text))
-            return false;
-
-        MessageHistory messageHistory = new()
+        try
         {
-            UserId = message.UserId,
-            RoomId = message.RoomId,
-            Message = message.Text
-        };
+            var user = await _userService.GetById(message.UserId);
+            var room = await _roomService.GetById(message.RoomId);
 
-        var isAdded = await _messageHistoryRepository.Add(messageHistory);
+            if (user == null || room == null)
+                return ErrorCatalog.RoomOrUserNotFound;
 
-        return isAdded;
+            message = await _filterUtility.Filter(message);
+            if (string.IsNullOrWhiteSpace(message.Text))
+                return ErrorCatalog.MessageIsEmpty;
+
+            MessageHistory messageHistory = new()
+            {
+                UserId = message.UserId,
+                RoomId = message.RoomId,
+                Message = message.Text
+            };
+
+            var isAdded = await _messageHistoryRepository.Add(messageHistory);
+
+            return new EntityResult<MessageHistory>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred");
+            return new EntityResult<MessageHistory>("Unknown error", true);
+        }
     }
 
-    public async Task<List<MessageHistory>> GetList(Guid roomId)
+    public async Task<EntityResult<IEnumerable<MessageHistory>>> GetList(Guid roomId)
     {
-        var room = await _roomService.GetById(roomId);
-        if (room == null)
-            throw new ArgumentNullException("The room can't be null");
+        try
+        {
+            var targetRoom = await _roomService.GetById(roomId);
+            if (targetRoom.Entity == null)
+                return ErrorCatalog.MessagesForRoomNotFound;
 
-        var messages = await _messageHistoryRepository.GetList(roomId);
+            var result = new EntityResult<IEnumerable<MessageHistory>>()
+            {
+                Entity = await _messageHistoryRepository.GetList(roomId)
+            };
 
-        return messages;
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred");
+            return new EntityResult<IEnumerable<MessageHistory>>("Unknown error", true);
+        }
     }
 }
