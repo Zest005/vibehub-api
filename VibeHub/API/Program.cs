@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using WebSocketManager;
 
 namespace API;
 
@@ -54,6 +55,10 @@ public class Program
             c.SwaggerDoc("v1", new OpenApiInfo { Title = "VibeHub API", Version = "v1" });
         });
 
+        // WebSockets
+        builder.Services.AddWebSocketManager();
+        builder.Services.AddSingleton<CustomWebSocketHandler>();
+
         var app = builder.Build();
 
         if (app.Environment.IsDevelopment())
@@ -73,6 +78,11 @@ public class Program
         app.UseSession();
         app.UseAuthentication();
         app.UseAuthorization();
+
+        // WebSockets
+        app.UseWebSockets();
+        app.MapWebSocketManager("/ws", app.Services.GetRequiredService<CustomWebSocketHandler>());
+
         app.MapControllers();
       
         app.Run();

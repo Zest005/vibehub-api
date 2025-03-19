@@ -4,6 +4,7 @@ using Core.DTO;
 using Core.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace API.Controllers;
 
@@ -14,10 +15,14 @@ public class RoomController : ControllerBase
     private readonly IRoomService _roomService;
     private readonly ISessionService _sessionService;
 
-    public RoomController(IRoomService roomService, ISessionService sessionService)
+    // WebSockets
+    private readonly CustomWebSocketHandler _webSocketHandler;
+
+    public RoomController(IRoomService roomService, ISessionService sessionService, CustomWebSocketHandler webSocketHandler)
     {
         _roomService = roomService;
         _sessionService = sessionService;
+        _webSocketHandler = webSocketHandler;
     }
 
     [HttpGet]
@@ -201,4 +206,38 @@ public class RoomController : ControllerBase
             return StatusCode(500);
         }
     }
+
+    #region MUSIC HANDLER TEMPLATE
+    [Authorize]
+    [HttpPost("{id}/start")]
+    [ServiceFilter(typeof(SessionValidationAttribute))]
+    public async Task<IActionResult> StartTrack(Guid id)
+    {
+        var trackPosition = 0; // Get the current track position
+        var startTime = DateTime.UtcNow;
+
+        // Store the track state
+        // ...
+
+        // Notify all clients about the track start
+        var message = new { action = "start", trackPosition, startTime };
+        await _webSocketHandler.SendMessageToAllAsync(JsonConvert.SerializeObject(message));
+
+        return Ok();
+    }
+
+    [Authorize]
+    [HttpPost("{id}/sync")]
+    [ServiceFilter(typeof(SessionValidationAttribute))]
+    public async Task<IActionResult> SyncTrack(Guid id)
+    {
+        var trackPosition = 0; // Get the current track position
+
+        // Notify all clients about the current track position
+        var message = new { action = "sync", trackPosition };
+        await _webSocketHandler.SendMessageToAllAsync(JsonConvert.SerializeObject(message));
+
+        return Ok();
+    }
+    #endregion
 }
