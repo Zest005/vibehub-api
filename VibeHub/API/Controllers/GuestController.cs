@@ -23,6 +23,15 @@ public class GuestController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create()
     {
+        var existingGuestResult = _sessionService.GetGuestIdFromSession();
+
+        if (!existingGuestResult.HaveErrors)
+        {
+            await _guestService.Delete(existingGuestResult.Entity);
+            HttpContext.Session.Remove("SessionId");
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        }
+
         var guest = await _guestService.Create();
         var sessionId = _sessionService.CreateSession(null, guest);
 

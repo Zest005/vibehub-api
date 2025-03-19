@@ -35,4 +35,22 @@ public class MusicController : ControllerBase
             return result.HaveErrors == false ? Ok(result.Entity) : NotFound(new { Error = result.ToString() });
         }
     }
+
+    #region MUSIC HANDLER TEMPLATE
+    [HttpGet("{id}/stream")]
+    [ServiceFilter(typeof(SessionValidationAttribute))]
+    public async Task<IActionResult> StreamAudio(Guid id)
+    {
+        var music = await _musicService.GetById(id);
+        if (music.HaveErrors)
+            return NotFound();
+
+        var filePath = Path.Combine("path_to_audio_files", $"{music.Entity.Id}.mp3");
+        var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+        return new FileStreamResult(stream, "audio/mpeg")
+        {
+            EnableRangeProcessing = true
+        };
+    }
+    #endregion
 }
