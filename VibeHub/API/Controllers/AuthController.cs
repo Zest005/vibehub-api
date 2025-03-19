@@ -1,10 +1,11 @@
+using System.Security.Claims;
 using BLL.Abstractions.Services;
 using Core.DTO;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+
 
 namespace API.Controllers;
 
@@ -17,7 +18,8 @@ public class AuthController : ControllerBase
     private readonly ILogger<AuthController> _logger;
     private readonly ISessionService _sessionService;
 
-    public AuthController(IAuthService authService, IUserService userService, ILogger<AuthController> logger, ISessionService sessionService)
+    public AuthController(IAuthService authService, IUserService userService, ILogger<AuthController> logger,
+        ISessionService sessionService)
     {
         _authService = authService;
         _userService = userService;
@@ -40,7 +42,7 @@ public class AuthController : ControllerBase
 
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, sessionId)
+            new(ClaimTypes.NameIdentifier, sessionId)
         };
 
         var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -49,13 +51,15 @@ public class AuthController : ControllerBase
             IsPersistent = true
         };
 
-        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
+        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(claimsIdentity), authProperties);
 
         return Ok(new { SessionId = sessionId });
     }
 
     [Authorize]
     [HttpPost("logout")]
+    [ServiceFilter(typeof(SessionValidationAttribute))]
     public async Task<IActionResult> Logout()
     {
         var sessionId = HttpContext.Session.GetString("SessionId");
@@ -64,15 +68,21 @@ public class AuthController : ControllerBase
             return Unauthorized();
         }
 
-        var userId = _sessionService.GetUserIdFromSession();
-        var user = await _userService.GetById(userId);
+        var userResult = _sessionService.GetUserIdFromSession();
 
-        if (user == null)
-        {
-            return Unauthorized();
-        }
+        if (userResult.HaveErrors)
+            return BadRequest(userResult.ToString());
 
-        await _authService.Logout(user);
+        var result = await _userService.GetById(userResult.Entity);
+
+        if (result.HaveErrors)
+            return BadRequest(result.ToString());
+
+        var logoutResult = await _authService.Logout(result.Entity);
+
+        if (logoutResult.HaveErrors)
+            return StatusCode(500, logoutResult.ToString());
+
 
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         HttpContext.Session.Remove("SessionId");
@@ -83,8 +93,10 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
     {
-        var user = await _authService.Register(registerDto);
+        var result = await _authService.Register(registerDto);
 
-        return CreatedAtAction(nameof(Register), new { id = user.Id }, user);
+        return result.HaveErrors == false
+            ? Ok(result.Entity)
+            : BadRequest(result.ToString());
     }
 }

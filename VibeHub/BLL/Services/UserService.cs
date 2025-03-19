@@ -1,14 +1,15 @@
+using System.ComponentModel.DataAnnotations;
 using BLL.Abstractions.Services;
 using BLL.Abstractions.Utilities;
 using Core.DTO;
+using Core.Errors;
 using Core.Models;
 using DAL.Abstractions.Interfaces;
 using Microsoft.Extensions.Logging;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Processing;
-using System.Security.Cryptography;
-using System.Text;
+
 
 namespace BLL.Services;
 
@@ -19,7 +20,8 @@ public class UserService : IUserService
     private readonly IUserRepository _userRepository;
     private readonly IPasswordManagerUtility _passwordManagerUtility;
 
-    public UserService(IFilterUtility filterUtility, ILogger<UserService> logger, IUserRepository userRepository, IPasswordManagerUtility passwordManagerUtility)
+    public UserService(IFilterUtility filterUtility, ILogger<UserService> logger, IUserRepository userRepository,
+        IPasswordManagerUtility passwordManagerUtility)
     {
         _filterUtility = filterUtility;
         _logger = logger;
@@ -27,118 +29,240 @@ public class UserService : IUserService
         _passwordManagerUtility = passwordManagerUtility;
     }
 
-    public async Task Add(User user)
+    public async Task<EntityResult<User>> Add(User user)
     {
-        if (await _userRepository.Exists(user.Id))
-            throw new InvalidOperationException("A user with the same ID already exists.");
-
-        user = await _filterUtility.Filter(user);
-        
-        await _userRepository.Add(user);
-    }
-
-    public async Task Delete(Guid id)
-    {
-        var user = await _userRepository.GetById(id);
-        
-        if (user == null)
-            throw new KeyNotFoundException("User not found.");
-
-        await _userRepository.Delete(id);
-    }
-
-    public async Task<User> GetById(Guid id)
-    {
-        var user = await _userRepository.GetById(id);
-        
-        if (user == null)
-            throw new KeyNotFoundException("User not found.");
-
-        return user;
-    }
-
-    public async Task<IEnumerable<User>> GetList()
-    {
-        return await _userRepository.GetList();
-    }
-
-    public async Task Update(Guid id, User user)
-    {
-        var existingUser = await _userRepository.GetById(id);
-        
-        if (existingUser == null)
-            throw new KeyNotFoundException("User not found.");
-
-        user = await _filterUtility.Filter(user);
-
-        existingUser.Email = user.Email;
-        existingUser.Nickname = user.Nickname;
-        existingUser.Password = user.Password;
-        existingUser.Room = user.Room;
-        existingUser.SessionId = user.SessionId;
-        existingUser.Salt = user.Salt;
-
-        await _userRepository.Update(existingUser);
-    }
-
-    public async Task UpdateDto(Guid id, UserDto userDto)
-    {
-        string? fileData = null;
-
-        var targetUser = await _userRepository.GetById(id);
-
-        if (targetUser == null)
-            throw new KeyNotFoundException("User not found.");
-
-        if (userDto.Avatar != null)
+        try
         {
-            using var memoryStream = new MemoryStream();
-            await userDto.Avatar.CopyToAsync(memoryStream);
-            memoryStream.Position = 0;
+            if (await _userRepository.Exists(user.Id))
+                return ErrorCatalog.UserAlreadyExists;
 
-            using var image = await Image.LoadAsync(memoryStream);
-            image.Mutate(x => x.Resize(24, 24));
+            user = await _filterUtility.Filter(user);
 
-            using var outputStream = new MemoryStream();
-            await image.SaveAsync(outputStream, new PngEncoder());
+            await _userRepository.Add(user);
 
-            fileData = Convert.ToBase64String(outputStream.ToArray());
+            return new EntityResult<User>
+            {
+                Entity = user
+            };
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "An error occurred while logging out user.");
+            return new EntityResult<User>("Unknown error", true);
+        }
+    }
+
+    public async Task<EntityResult<User>> Delete(Guid id)
+    {
+        try
+        {
+            var user = await _userRepository.GetById(id);
+
+            if (user == null)
+            {
+                _logger.LogError("User not found");
+                return ErrorCatalog.UserNotFound;
+            }
+
+            return new EntityResult<User>();
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "An error occurred while logging out user.");
+            return new EntityResult<User>("Unknown error", true);
+        }
+    }
+
+    public async Task<EntityResult<User>> GetById(Guid id)
+    {
+        try
+        {
+            EntityResult<User> entityResult = new()
+            {
+                Entity = await _userRepository.GetById(id)
+            };
+
+            if (entityResult.Entity == null)
+            {
+                _logger.LogError("User not found");
+                return ErrorCatalog.UserNotFound;
+            }
+
+            return entityResult;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "An error occurred while logging out user.");
+            return new EntityResult<User>("Unknown error", true);
+        }
+    }
+
+    public async Task<EntityResult<IEnumerable<User>>> GetList()
+    {
+        try
+        {
+            EntityResult<IEnumerable<User>> entityResult = new()
+            {
+                Entity = await _userRepository.GetList()
+            };
+
+            return entityResult;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "An error occurred while logging out user.");
+            return new EntityResult<IEnumerable<User>>("Unknown error", true);
+        }
+    }
+
+    public async Task<EntityResult<User>> Update(Guid id, User user)
+    {
+        try
+        {
+            EntityResult<User> result = new()
+            {
+                Entity = await _userRepository.GetById(id)
+            };
+
+            if (result.Entity == null)
+            {
+                _logger.LogError("User not found");
+                return ErrorCatalog.UserNotFound;
+            }
+
+            user = await _filterUtility.Filter(user);
+
+            result.Entity.Email = user.Email;
+            result.Entity.Nickname = user.Nickname;
+            result.Entity.Password = user.Password;
+            result.Entity.Room = user.Room;
+            result.Entity.SessionId = user.SessionId;
+            result.Entity.Salt = user.Salt;
+
+            return result;
+        }
+        catch (ValidationException exception)
+        {
+            return new EntityResult<User>(exception.Message, true);
         }
 
-        userDto = await _filterUtility.Filter(userDto);
-
-        targetUser.Nickname = userDto.Nickname ?? targetUser.Nickname;
-        targetUser.Email = userDto.Email ?? targetUser.Email;
-        targetUser.Password = userDto.Password ?? targetUser.Password;
-        targetUser.Avatar = fileData ?? targetUser.Avatar;
-
-        await _userRepository.Update(targetUser);
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "An error occurred while updating user.");
+            return new EntityResult<User>("Unknown error", true);
+        }
     }
 
-    public async Task<User> Authenticate(string email, string password)
+    public async Task<EntityResult<User>> UpdateDto(Guid id, UserDto userDto)
     {
-        var user = await _userRepository.GetByEmail(email);
+        try
+        {
+            string? fileData = null;
 
-        if (user == null || !_passwordManagerUtility.VerifyPasswordHash(password, user.Password, user.Salt))
-            return null;
+            var targetUser = await _userRepository.GetById(id);
 
-        return user;
+            if (targetUser == null)
+                return ErrorCatalog.UserNotFound;
+
+            if (userDto.Avatar != null)
+            {
+                using var memoryStream = new MemoryStream();
+                await userDto.Avatar.CopyToAsync(memoryStream);
+                memoryStream.Position = 0;
+
+                using var image = await Image.LoadAsync(memoryStream);
+                image.Mutate(x => x.Resize(24, 24));
+
+                using var outputStream = new MemoryStream();
+                await image.SaveAsync(outputStream, new PngEncoder());
+
+                fileData = Convert.ToBase64String(outputStream.ToArray());
+            }
+
+            userDto = await _filterUtility.Filter(userDto);
+
+            targetUser.Nickname = userDto.Nickname ?? targetUser.Nickname;
+            targetUser.Email = userDto.Email ?? targetUser.Email;
+            targetUser.Password = userDto.Password ?? targetUser.Password;
+            targetUser.Avatar = fileData ?? targetUser.Avatar;
+
+            return new EntityResult<User>();
+        }
+        catch (ValidationException exception)
+        {
+            return new EntityResult<User>(exception.Message, true);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "An error occurred while updating user.");
+            return new EntityResult<User>("Unknown error", true);
+        }
     }
 
-    public async Task Logout(User user)
+    public async Task<EntityResult<User>> Authenticate(string email, string password)
     {
-        user.SessionId = null;
-        
-        await _userRepository.Update(user);
+        EntityResult<User> result = new()
+        {
+            Entity = await _userRepository.GetByEmail(email)
+        };
+
+        if (result.Entity == null ||
+            !_passwordManagerUtility.VerifyPasswordHash(password, result.Entity.Password, result.Entity.Salt))
+            return ErrorCatalog.Unauthorized;
+
+        return result;
     }
 
-    public async Task<User?> GetByEmail(string email)
+    public async Task<EntityResult<User>> Logout(User user)
     {
-        return await _userRepository.GetByEmail(email);
+        try
+        {
+            user.SessionId = null;
+
+            await _userRepository.Update(user);
+
+            return new EntityResult<User>();
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "An error occurred while logging out user.");
+            return new EntityResult<User>("Unknown error", true);
+        }
     }
 
-    public async Task<User?> GetByNickname(string nickname)
+    public async Task<EntityResult<User>?> GetByEmail(string email)
     {
-        return await _userRepository.GetByNickname(nickname);
+        try
+        {
+            EntityResult<User> result = new()
+            {
+                Entity = await _userRepository.GetByEmail(email)
+            };
+
+            return result;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "An error occurred while logging out user.");
+            return new EntityResult<User>("Unknown error", true);
+        }
+    }
+
+    public async Task<EntityResult<User>?> GetByNickname(string nickname)
+    {
+        try
+        {
+            EntityResult<User> result = new()
+            {
+                Entity = await _userRepository.GetByNickname(nickname)
+            };
+
+            return result;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "An error occurred while logging out user.");
+            return new EntityResult<User>("Unknown error", true);
+        }
     }
 }

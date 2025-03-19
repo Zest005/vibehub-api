@@ -1,14 +1,15 @@
+using Core.Errors;
 using Core.Models;
 
 namespace BLL.Abstractions.Services;
 
 public interface ISessionService
 {
-    Guid GetUserIdFromSession();
     string CreateSession(User? user = null, Guest? guest = null);
+    EntityResult<Guid> GetUserIdFromSession();
     bool ValidateUserSession(string sessionId);
     Task InvalidateUserSession(string sessionId);
+    EntityResult<Guid> GetGuestIdFromSession();
     bool ValidateGuestSession(string sessionId);
-    Task InvalidateGuestSession(string sessionId);
-    Guid GetGuestIdFromSession(string sessionId);
+    EntityResult<Guid> GetIdFromVisitor();
 }

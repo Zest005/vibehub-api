@@ -1,4 +1,5 @@
 using Core.DTO;
+using Core.Errors;
 using Core.Models;
 
 namespace BLL.Abstractions.Services;
@@ -6,6 +7,6 @@ namespace BLL.Abstractions.Services;
 public interface IAuthService
 {
     Task<string> Login(LoginDto loginDto);
-    Task Logout(User user);
-    Task<User> Register(RegisterDto registerDto);
+    Task<EntityResult<User>> Logout(User user);
+    Task<EntityResult<User>> Register(RegisterDto registerDto);
 }

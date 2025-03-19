@@ -46,18 +46,15 @@ public class GuestController : ControllerBase
 
     [Authorize]
     [HttpDelete]
+    [ServiceFilter(typeof(SessionValidationAttribute))]
     public async Task<IActionResult> Delete()
     {
-        var sessionId = HttpContext.Session.GetString("SessionId");
+        var guestResult = _sessionService.GetGuestIdFromSession();
+        if (guestResult.HaveErrors)
+            return NotFound();
 
-        if (string.IsNullOrEmpty(sessionId))
-        {
-            return Unauthorized();
-        }
-
-        var guestId = _sessionService.GetGuestIdFromSession(sessionId);
-        await _guestService.Delete(guestId);
-
+        await _guestService.Delete(guestResult.Entity);
+        
         HttpContext.Session.Remove("SessionId");
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
